@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.moriafly.salt.audiotag.rw
 
 /*
@@ -17,14 +19,34 @@ package com.moriafly.salt.audiotag.rw
  * 02110-1301 USA
  */
 
+/**
+ * Base class for auto-closable audio files with metadata support.
+ *
+ * @author Moriafly
+ */
 abstract class AudioFile : AutoCloseable {
-    abstract fun <T> getMetadata(key: MetadataKey<T>): List<T>?
-
-    abstract fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>?
-
+    /**
+     * Returns detected audio properties or `null` if unavailable.
+     */
     abstract fun getAudioProperties(): AudioProperties?
 
-    fun <T> getFirstMetadata(key: MetadataKey<T>): T? = getMetadata(key)?.firstOrNull()
+    /**
+     * Returns all pre-loaded metadata values for [key], empty list if none exist.
+     */
+    abstract fun <T> getMetadata(key: MetadataKey<T>): List<T>
 
-    fun <T> getFirstLazyMetadata(key: LazyMetadataKey<T>): T? = getLazyMetadata(key)?.firstOrNull()
+    /**
+     * Returns metadata values for [key] parsed on read, empty list if none exist.
+     */
+    abstract fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>
+
+    /**
+     * First value from [getMetadata] for [key], or `null` if empty.
+     */
+    fun <T> getFirstMetadata(key: MetadataKey<T>): T? = getMetadata(key).firstOrNull()
+
+    /**
+     * First value from [getLazyMetadata] for [key], triggers parsing on read.
+     */
+    fun <T> getFirstLazyMetadata(key: LazyMetadataKey<T>): T? = getLazyMetadata(key).firstOrNull()
 }
