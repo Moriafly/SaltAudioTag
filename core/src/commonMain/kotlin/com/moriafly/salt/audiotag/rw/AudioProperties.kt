@@ -17,4 +17,12 @@ package com.moriafly.salt.audiotag.rw
  * 02110-1301 USA
  */
 
-class AudioProperties
+/**
+ * @author Moriafly
+ */
+data class AudioProperties(
+    val sampleRate: Int,
+    val channelCount: Int,
+    val bits: Int,
+    val sampleCount: Long
+)

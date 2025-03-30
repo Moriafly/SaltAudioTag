@@ -28,6 +28,8 @@ import kotlinx.io.Source
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.toHexString
 import kotlinx.io.readByteString
+import kotlinx.io.readString
+import kotlinx.io.readUIntLe
 
 internal class Signature(
     source: Source
@@ -176,4 +178,33 @@ internal class MetadataBlockStreaminfo(
             "minFrameSize=$minFrameSize, maxFrameSize=$maxFrameSize, sampleRate=$sampleRate, " +
             "channelCount=$channelCount, bits=$bits, sampleCount=$sampleCount, " +
             "unencodedAudioDataMd5Checksum='$unencodedAudioDataMd5Checksum')"
+}
+
+/**
+ * FLAC tags, without the framing bit.
+ *
+ * [Ogg Vorbis](https://www.xiph.org/vorbis/doc/v-comment.html)
+ */
+internal class VorbisComment(
+    source: Source
+) {
+    val vendorString: String
+    val userComments: List<String>
+
+    init {
+        val vendorLength = source.readUIntLe().toLong()
+        vendorString = source.readString(vendorLength)
+
+        val userCommentListLength = source.readUIntLe().toLong()
+        userComments = ArrayList(userCommentListLength.toInt())
+
+        for (i in 0 until userCommentListLength) {
+            val userCommentLength = source.readUIntLe().toLong()
+            val userComment = source.readString(userCommentLength)
+            userComments.add(userComment)
+        }
+    }
+
+    override fun toString(): String = "VorbisComment(vendorString='$vendorString', " +
+        "userComments=$userComments)"
 }

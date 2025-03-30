@@ -19,6 +19,66 @@ package com.moriafly.salt.audiotag.rw
  * 02110-1301 USA
  */
 
-sealed class MetadataKey<T> {
-    data object Title : MetadataKey<String>()
+sealed class MetadataKey<T>(
+    vararg val fields: String
+) {
+    data object Title : MetadataKey<String>("TITLE")
+
+    data object Version : MetadataKey<String>("VERSION")
+
+    data object Album : MetadataKey<String>("ALBUM")
+
+    @Suppress("SpellCheckingInspection")
+    data object TrackNumber : MetadataKey<String>("TRACKNUMBER")
+
+    data object Artist : MetadataKey<String>("ARTIST")
+
+    data object Performer : MetadataKey<String>("PERFORMER")
+
+    data object Copyright : MetadataKey<String>("COPYRIGHT")
+
+    data object License : MetadataKey<String>("LICENSE")
+
+    data object Organization : MetadataKey<String>("ORGANIZATION")
+
+    data object Description : MetadataKey<String>("DESCRIPTION")
+
+    data object Genre : MetadataKey<String>("GENRE")
+
+    data object Date : MetadataKey<String>("DATE")
+
+    data object Location : MetadataKey<String>("LOCATION")
+
+    data object Contact : MetadataKey<String>("CONTACT")
+
+    /**
+     * ISRC number for the track; see the [ISRC intro page](https://isrc.ifpi.org/) for more
+     * information on ISRC numbers.
+     */
+    data object ISRC : MetadataKey<String>("ISRC")
+
+    data object Lyrics : MetadataKey<String>("LYRICS")
+
+    companion object {
+        /**
+         * The keys that are used by the VorbisComment specification.
+         */
+        val OggVorbis = listOf(
+            Title,
+            Version,
+            Album,
+            TrackNumber,
+            Artist,
+            Performer,
+            Copyright,
+            License,
+            Organization,
+            Description,
+            Genre,
+            Date,
+            Location,
+            Contact,
+            ISRC
+        )
+    }
 }

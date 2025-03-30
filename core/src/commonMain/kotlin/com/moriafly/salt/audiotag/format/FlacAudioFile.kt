@@ -35,15 +35,29 @@ import kotlinx.io.Source
 class FlacAudioFile(
     private val source: Source
 ) : AudioFile() {
-    override fun <T> getMetadata(key: MetadataKey<T>): List<T>? {
-        TODO("Not yet implemented")
+    private var audioProperties: AudioProperties? = null
+    private val metadataMap = mutableMapOf<MetadataKey<*>, MutableList<*>>()
+
+    private fun <T> putMetadata(key: MetadataKey<T>, value: T) {
+        val list = metadataMap.getOrPut(key) { mutableListOf<T>() }
+        @Suppress("UNCHECKED_CAST")
+        (list as MutableList<T>).add(value)
     }
 
-    override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>? {
-        TODO("Not yet implemented")
+    override fun getAudioProperties(): AudioProperties? = audioProperties
+
+    override fun <T> getMetadata(key: MetadataKey<T>): List<T> {
+        @Suppress("UNCHECKED_CAST")
+        return metadataMap[key]
+            ?.let {
+                it as List<T>
+            }
+            ?: emptyList()
     }
 
-    override fun getAudioProperties(): AudioProperties? {
+    override fun getAllMetadata(): Map<MetadataKey<*>, List<*>> = metadataMap
+
+    override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> {
         TODO("Not yet implemented")
     }
 
@@ -57,13 +71,52 @@ class FlacAudioFile(
         var metadataBlockHeader: MetadataBlockHeader
         do {
             metadataBlockHeader = MetadataBlockHeader(source)
-            println("blocktype = " + metadataBlockHeader.blockType)
 
-            if (metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_STREAMINFO) {
-                val streaminfo = MetadataBlockStreaminfo(source)
-                println("streaminfo = $streaminfo")
-            } else {
-                source.skip(metadataBlockHeader.length.toLong())
+            when (metadataBlockHeader.blockType) {
+                MetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
+                    val streaminfo = MetadataBlockStreaminfo(source)
+                    audioProperties = AudioProperties(
+                        sampleRate = streaminfo.sampleRate,
+                        channelCount = streaminfo.channelCount,
+                        bits = streaminfo.bits,
+                        sampleCount = streaminfo.sampleCount
+                    )
+                }
+
+                MetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT -> {
+                    val vorbisComment = VorbisComment(source)
+                    // println(vorbisComment.toString())
+
+                    val availableMetadataKeys = MetadataKey.OggVorbis +
+                        listOf(
+                            MetadataKey.Lyrics
+                        )
+
+                    val fieldToKeyMap = availableMetadataKeys
+                        .flatMap { key ->
+                            key.fields.map { field ->
+                                field to key
+                            }
+                        }
+                        .toMap()
+
+                    vorbisComment.userComments.forEach { userComment ->
+                        val parts = userComment.split('=', limit = 2)
+                        if (parts.size == 2) {
+                            val rawField = parts[0].trim()
+                            val value = parts[1].trim()
+                            val normalizedField = rawField.uppercase()
+
+                            fieldToKeyMap[normalizedField]?.let { metadataKey ->
+                                putMetadata(metadataKey, value)
+                            }
+                        }
+                    }
+                }
+
+                else -> {
+                    source.skip(metadataBlockHeader.length.toLong())
+                }
             }
         } while (!metadataBlockHeader.isLastMetadataBlock)
     }
