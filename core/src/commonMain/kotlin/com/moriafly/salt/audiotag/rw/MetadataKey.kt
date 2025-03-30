@@ -20,7 +20,7 @@ package com.moriafly.salt.audiotag.rw
  */
 
 sealed class MetadataKey<T>(
-    vararg val fields: String
+    val field: String
 ) {
     data object Title : MetadataKey<String>("TITLE")
 
@@ -59,6 +59,17 @@ sealed class MetadataKey<T>(
 
     data object Lyrics : MetadataKey<String>("LYRICS")
 
+    class Custom<T>(
+        field: String
+    ) : MetadataKey<T>(field) {
+        override fun toString(): String = field.uppercase()
+    }
+
+    /**
+     * Returns true if this key is a custom key.
+     */
+    fun isCustom(): Boolean = this is Custom<*>
+
     companion object {
         /**
          * The keys that are used by the VorbisComment specification.
@@ -80,5 +91,7 @@ sealed class MetadataKey<T>(
             Contact,
             ISRC
         )
+
+        fun <T> custom(field: String) = Custom<T>(field)
     }
 }

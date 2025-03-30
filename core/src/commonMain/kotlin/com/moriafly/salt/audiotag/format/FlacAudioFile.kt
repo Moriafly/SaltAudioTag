@@ -85,20 +85,13 @@ class FlacAudioFile(
 
                 MetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT -> {
                     val vorbisComment = VorbisComment(source)
-                    // println(vorbisComment.toString())
 
                     val availableMetadataKeys = MetadataKey.OggVorbis +
                         listOf(
                             MetadataKey.Lyrics
                         )
 
-                    val fieldToKeyMap = availableMetadataKeys
-                        .flatMap { key ->
-                            key.fields.map { field ->
-                                field to key
-                            }
-                        }
-                        .toMap()
+                    val fieldToKeyMap = availableMetadataKeys.associateBy { it.field }
 
                     vorbisComment.userComments.forEach { userComment ->
                         val parts = userComment.split('=', limit = 2)
@@ -107,9 +100,13 @@ class FlacAudioFile(
                             val value = parts[1].trim()
                             val normalizedField = rawField.uppercase()
 
-                            fieldToKeyMap[normalizedField]?.let { metadataKey ->
-                                putMetadata(metadataKey, value)
-                            }
+                            fieldToKeyMap[normalizedField]
+                                ?.let { metadataKey ->
+                                    putMetadata(metadataKey, value)
+                                }
+                                ?: run {
+                                    putMetadata(MetadataKey.custom(normalizedField), value)
+                                }
                         }
                     }
                 }
