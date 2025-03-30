@@ -64,11 +64,10 @@ class FlacAudioFile(
     override fun getAllMetadata(): Map<MetadataKey<*>, List<*>> = metadataMap
 
     override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> = when (key) {
-        LazyMetadataKey.FrontCover -> {
+        is LazyMetadataKey.Picture -> {
             @Suppress("UNCHECKED_CAST")
             audioPictures
-                .filter { it.pictureType == AudioPicture.PictureType.FrontCover }
-                .map { it.pictureData }
+                .filter { it.pictureType == key.pictureType }
                 .toList() as List<T>
         }
     }

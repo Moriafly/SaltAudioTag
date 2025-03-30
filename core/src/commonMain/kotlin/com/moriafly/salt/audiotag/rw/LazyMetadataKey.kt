@@ -20,5 +20,7 @@ package com.moriafly.salt.audiotag.rw
  */
 
 sealed class LazyMetadataKey<T> {
-    data object FrontCover : LazyMetadataKey<ByteArray>()
+    data class Picture(
+        val pictureType: AudioPicture.PictureType
+    ) : LazyMetadataKey<AudioPicture>()
 }
