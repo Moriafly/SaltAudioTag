@@ -48,10 +48,10 @@ abstract class AudioFile : AutoCloseable {
     /**
      * First value from [getMetadata] for [key], or `null` if empty.
      */
-    fun <T> getFirstMetadata(key: MetadataKey<T>): T? = getMetadata(key).firstOrNull()
+    fun <T> getMetadataFirst(key: MetadataKey<T>): T? = getMetadata(key).firstOrNull()
 
     /**
      * First value from [getLazyMetadata] for [key], triggers parsing on read.
      */
-    fun <T> getFirstLazyMetadata(key: LazyMetadataKey<T>): T? = getLazyMetadata(key).firstOrNull()
+    fun <T> getLazyMetadataFirst(key: LazyMetadataKey<T>): T? = getLazyMetadata(key).firstOrNull()
 }

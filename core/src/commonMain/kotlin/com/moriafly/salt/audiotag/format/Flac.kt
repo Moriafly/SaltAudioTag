@@ -24,9 +24,11 @@
 
 package com.moriafly.salt.audiotag.format
 
+import com.moriafly.salt.audiotag.rw.AudioPicture
 import kotlinx.io.Source
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.toHexString
+import kotlinx.io.readByteArray
 import kotlinx.io.readByteString
 import kotlinx.io.readString
 import kotlinx.io.readUIntLe
@@ -207,4 +209,54 @@ internal class VorbisComment(
 
     override fun toString(): String = "VorbisComment(vendorString='$vendorString', " +
         "userComments=$userComments)"
+}
+
+internal class Picture(
+    source: Source
+) {
+    val pictureType = source.readInt()
+    val mediaTypeLength = source.readInt()
+    val mediaType = source.readString(mediaTypeLength.toLong())
+    val descriptionLength = source.readInt()
+    val description = source.readString(descriptionLength.toLong())
+    val width = source.readInt()
+    val height = source.readInt()
+    val colorDepth = source.readInt()
+    val colorsNumber = source.readInt()
+    val pictureDataLength = source.readInt()
+    val pictureData = source.readByteArray(pictureDataLength)
+
+    fun toAudioPicture(): AudioPicture = AudioPicture(
+        pictureType = when (pictureType) {
+            0 -> AudioPicture.PictureType.Other
+            1 -> AudioPicture.PictureType.PngFileIcon32x32
+            2 -> AudioPicture.PictureType.GeneralFileIcon
+            3 -> AudioPicture.PictureType.FrontCover
+            4 -> AudioPicture.PictureType.BackCover
+            5 -> AudioPicture.PictureType.LinerNotesPage
+            6 -> AudioPicture.PictureType.MediaLabel
+            7 -> AudioPicture.PictureType.Lead
+            8 -> AudioPicture.PictureType.Artist
+            9 -> AudioPicture.PictureType.Conductor
+            10 -> AudioPicture.PictureType.Band
+            11 -> AudioPicture.PictureType.Composer
+            12 -> AudioPicture.PictureType.Lyricist
+            13 -> AudioPicture.PictureType.RecordingLocation
+            14 -> AudioPicture.PictureType.DuringRecording
+            15 -> AudioPicture.PictureType.DuringPerformance
+            16 -> AudioPicture.PictureType.MovieScreenCapture
+            17 -> AudioPicture.PictureType.BrightColoredFish
+            18 -> AudioPicture.PictureType.Illustration
+            19 -> AudioPicture.PictureType.BandLogo
+            20 -> AudioPicture.PictureType.PublisherLogotype
+            else -> AudioPicture.PictureType.Unknown
+        },
+        mediaType = mediaType,
+        description = description,
+        width = width,
+        height = height,
+        colorDepth = colorDepth,
+        colorsNumber = colorsNumber,
+        pictureData = pictureData
+    )
 }

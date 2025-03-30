@@ -19,10 +19,13 @@
 
 package com.moriafly.salt.audiotag.format
 
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.AudioFile
+import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.AudioProperties
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
 import com.moriafly.salt.audiotag.rw.MetadataKey
+import com.moriafly.salt.audiotag.rw.ReadStrategy
 import kotlinx.io.Source
 
 /**
@@ -32,11 +35,14 @@ import kotlinx.io.Source
  *
  * @author Moriafly 2025/3/29
  */
+@OptIn(UnstableSaltAudioTagApi::class)
 class FlacAudioFile(
-    private val source: Source
+    private val source: Source,
+    readStrategy: ReadStrategy
 ) : AudioFile() {
     private var audioProperties: AudioProperties? = null
     private val metadataMap = mutableMapOf<MetadataKey<*>, MutableList<*>>()
+    private val audioPictures = mutableListOf<AudioPicture>()
 
     private fun <T> putMetadata(key: MetadataKey<T>, value: T) {
         val list = metadataMap.getOrPut(key) { mutableListOf<T>() }
@@ -57,8 +63,14 @@ class FlacAudioFile(
 
     override fun getAllMetadata(): Map<MetadataKey<*>, List<*>> = metadataMap
 
-    override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> {
-        TODO("Not yet implemented")
+    override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> = when (key) {
+        LazyMetadataKey.FrontCover -> {
+            @Suppress("UNCHECKED_CAST")
+            audioPictures
+                .filter { it.pictureType == AudioPicture.PictureType.FrontCover }
+                .map { it.pictureData }
+                .toList() as List<T>
+        }
     }
 
     override fun close() {
@@ -72,8 +84,12 @@ class FlacAudioFile(
         do {
             metadataBlockHeader = MetadataBlockHeader(source)
 
-            when (metadataBlockHeader.blockType) {
-                MetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
+            println(
+                "BlockType = ${metadataBlockHeader.blockType}"
+            )
+
+            when {
+                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
                     val streaminfo = MetadataBlockStreaminfo(source)
                     audioProperties = AudioProperties(
                         sampleRate = streaminfo.sampleRate,
@@ -83,7 +99,8 @@ class FlacAudioFile(
                     )
                 }
 
-                MetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT -> {
+                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT &&
+                    readStrategy.canReadMetadata() -> {
                     val vorbisComment = VorbisComment(source)
 
                     val availableMetadataKeys = MetadataKey.OggVorbis +
@@ -109,6 +126,12 @@ class FlacAudioFile(
                                 }
                         }
                     }
+                }
+
+                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_PICTURE &&
+                    readStrategy.canReadLazyMetadata() -> {
+                    val picture = Picture(source)
+                    audioPictures.add(picture.toAudioPicture())
                 }
 
                 else -> {
