@@ -2,6 +2,9 @@
 
 package com.moriafly.salt.audiotag.rw
 
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import kotlinx.io.files.Path
+
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -44,6 +47,9 @@ abstract class AudioFile : AutoCloseable {
      * Returns metadata values for [key] parsed on read, empty list if none exist.
      */
     abstract fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>
+
+    @UnstableSaltAudioTagApi
+    abstract fun write(path: Path, vararg operation: WriteOperation)
 
     /**
      * First value from [getMetadata] for [key], or `null` if empty.

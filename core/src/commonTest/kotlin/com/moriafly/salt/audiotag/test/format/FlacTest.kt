@@ -4,20 +4,21 @@ import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
-import com.moriafly.salt.audiotag.rw.ReadStrategy
+import com.moriafly.salt.audiotag.rw.RwStrategy
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.test.Test
 
 class FlacTest {
+    private val path = Path("C:\\Users\\moria\\Music\\G.E.M.邓紫棋 - 桃花诺.flac")
+
     @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun test() {
-        val path = Path("C:\\Users\\moria\\Music\\G.E.M.邓紫棋 - 桃花诺.flac")
-        val audioFile = SaltAudioTag.read(
+        val audioFile = SaltAudioTag.create(
             path = path,
-            readStrategy = ReadStrategy.All
+            rwStrategy = RwStrategy.ReadWriteAll
         )
         audioFile.getAllMetadata().forEach { keyWithValues ->
             keyWithValues.value.forEach { value ->
@@ -46,5 +47,16 @@ class FlacTest {
         }
 
         audioFile.close()
+    }
+
+    @OptIn(UnstableSaltAudioTagApi::class)
+    @Test
+    fun testWrite() {
+        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
+        val audioFile = SaltAudioTag.create(
+            path = path,
+            rwStrategy = RwStrategy.ReadWriteAll
+        )
+        audioFile.write(outputPath)
     }
 }

@@ -20,12 +20,12 @@ import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
  */
 
 @UnstableSaltAudioTagApi
-enum class ReadStrategy {
-    All,
-    OnlyMetadata,
-    OnlyLazyMetadata;
+enum class RwStrategy {
+    ReadMetadataOnly,
+    ReadLazyMetadataOnly,
+    ReadWriteAll;
 
-    fun canReadMetadata(): Boolean = this == All || this == OnlyMetadata
+    fun canReadMetadata(): Boolean = this == ReadMetadataOnly || this == ReadWriteAll
 
-    fun canReadLazyMetadata(): Boolean = this == All || this == OnlyLazyMetadata
+    fun canReadLazyMetadata(): Boolean = this == ReadLazyMetadataOnly || this == ReadWriteAll
 }

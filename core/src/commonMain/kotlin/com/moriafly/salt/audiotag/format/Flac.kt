@@ -25,6 +25,7 @@
 package com.moriafly.salt.audiotag.format
 
 import com.moriafly.salt.audiotag.rw.AudioPicture
+import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.toHexString
@@ -33,7 +34,7 @@ import kotlinx.io.readByteString
 import kotlinx.io.readString
 import kotlinx.io.readUIntLe
 
-internal class Signature(
+internal class FlacSignature(
     source: Source
 ) {
     init {
@@ -47,16 +48,45 @@ internal class Signature(
          * A FLAC bitstream consists of the fLaC (i.e., 0x664C6143) marker at the beginning of the
          * stream.
          */
-        private val HEADER = ByteString(0x66, 0x4C, 0x61, 0x43)
+        val HEADER = ByteString(0x66, 0x4C, 0x61, 0x43)
     }
 }
 
-internal class MetadataBlockHeader(
-    source: Source
-) {
-    val isLastMetadataBlock: Boolean
-    val blockType: Int
-    val length: Int
+internal class FlacMetadataBlockHeader() {
+    constructor(source: Source) : this() {
+        val byteString = source.readByteString(4)
+
+        isLastMetadataBlock = (byteString[0].toInt() and 0b10000000 shr 7) == 1
+        blockType = byteString[0].toInt() and 0b01111111
+        length = (byteString[1].toInt() and 0xFF shl 16) or
+            (byteString[2].toInt() and 0xFF shl 8) or
+            (byteString[3].toInt() and 0xFF)
+    }
+
+    constructor(
+        isLastMetadataBlock: Boolean,
+        blockType: Int,
+        length: Int
+    ) : this() {
+        this.isLastMetadataBlock = isLastMetadataBlock
+        this.blockType = blockType
+        this.length = length
+    }
+
+    var isLastMetadataBlock: Boolean = false
+    var blockType: Int = 0
+    var length: Int = 0
+
+    fun reWrite(isLastMetadataBlock: Boolean): ByteString = Buffer()
+        .apply {
+            writeByte(
+                ((if (isLastMetadataBlock) 0x80 else 0x00) or (blockType and 0x7F)).toByte()
+            )
+            writeByte(((length ushr 16) and 0xFF).toByte())
+            writeByte(((length ushr 8) and 0xFF).toByte())
+            writeByte((length and 0xFF).toByte())
+        }
+        .readByteString()
 
     @Suppress("SpellCheckingInspection")
     companion object {
@@ -69,16 +99,6 @@ internal class MetadataBlockHeader(
         const val BLOCK_TYPE_PICTURE = 6
         const val BLOCK_TYPE_INVALID = 127
     }
-
-    init {
-        val byteString = source.readByteString(4)
-
-        isLastMetadataBlock = (byteString[0].toInt() and 0b10000000 shr 7) == 1
-        blockType = byteString[0].toInt() and 0b01111111
-        length = (byteString[1].toInt() and 0xFF shl 16) or
-            (byteString[2].toInt() and 0xFF shl 8) or
-            (byteString[3].toInt() and 0xFF)
-    }
 }
 
 /**
@@ -87,7 +107,7 @@ internal class MetadataBlockHeader(
  * in the stream. Other metadata blocks MAY follow. There MUST be no more than one streaminfo
  * metadata block per FLAC stream.
  */
-internal class MetadataBlockStreaminfo(
+internal class FlacMetadataBlockStreaminfo(
     source: Source
 ) {
     /**
@@ -136,9 +156,9 @@ internal class MetadataBlockStreaminfo(
      */
     val unencodedAudioDataMd5Checksum: String
 
-    init {
-        val byteString = source.readByteString(34)
+    val byteString = source.readByteString(34)
 
+    init {
         minBlockSize = (byteString[0].toInt() and 0xFF shl 8) or
             (byteString[1].toInt() and 0xFF)
         maxBlockSize = (byteString[2].toInt() and 0xFF shl 8) or
@@ -187,7 +207,7 @@ internal class MetadataBlockStreaminfo(
  *
  * [Ogg Vorbis](https://www.xiph.org/vorbis/doc/v-comment.html)
  */
-internal class VorbisComment(
+internal class FlacVorbisComment(
     source: Source
 ) {
     val vendorString: String
@@ -211,7 +231,7 @@ internal class VorbisComment(
         "userComments=$userComments)"
 }
 
-internal class Picture(
+internal class FlacPicture(
     source: Source
 ) {
     val pictureType = source.readInt()

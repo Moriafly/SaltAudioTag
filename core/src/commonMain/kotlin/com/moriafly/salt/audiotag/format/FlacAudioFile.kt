@@ -25,8 +25,13 @@ import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.AudioProperties
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
 import com.moriafly.salt.audiotag.rw.MetadataKey
-import com.moriafly.salt.audiotag.rw.ReadStrategy
+import com.moriafly.salt.audiotag.rw.RwStrategy
+import com.moriafly.salt.audiotag.rw.WriteOperation
 import kotlinx.io.Source
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.write
 
 /**
  * # FLAC
@@ -38,11 +43,14 @@ import kotlinx.io.Source
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacAudioFile(
     private val source: Source,
-    readStrategy: ReadStrategy
+    private val rwStrategy: RwStrategy
 ) : AudioFile() {
-    private var audioProperties: AudioProperties? = null
     private val metadataMap = mutableMapOf<MetadataKey<*>, MutableList<*>>()
     private val audioPictures = mutableListOf<AudioPicture>()
+    private val metadataBlockHeaders = mutableListOf<FlacMetadataBlockHeader>()
+
+    private var streaminfo: FlacMetadataBlockStreaminfo? = null
+    private var audioProperties: AudioProperties? = null
 
     private fun <T> putMetadata(key: MetadataKey<T>, value: T) {
         val list = metadataMap.getOrPut(key) { mutableListOf<T>() }
@@ -72,35 +80,61 @@ class FlacAudioFile(
         }
     }
 
+    @UnstableSaltAudioTagApi
+    override fun write(path: Path, vararg operation: WriteOperation) {
+        require(rwStrategy == RwStrategy.ReadWriteAll) {
+            "The rwStrategy does not support writing."
+        }
+
+        require(streaminfo != null) {
+            "The streaminfo is null."
+        }
+
+        val sink = SystemFileSystem.sink(path).buffered()
+        sink.write(FlacSignature.HEADER)
+
+        metadataBlockHeaders.forEach { metadataBlockHeader ->
+            if (metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_STREAMINFO) {
+                sink.write(metadataBlockHeader.reWrite(true))
+                sink.write(streaminfo!!.byteString)
+            }
+        }
+
+        sink.transferFrom(source)
+    }
+
     override fun close() {
         source.close()
     }
 
     init {
-        Signature(source)
+        FlacSignature(source)
 
-        var metadataBlockHeader: MetadataBlockHeader
+        var metadataBlockHeader: FlacMetadataBlockHeader
         do {
-            metadataBlockHeader = MetadataBlockHeader(source)
+            metadataBlockHeader = FlacMetadataBlockHeader(source)
+            metadataBlockHeaders.add(metadataBlockHeader)
 
             println(
                 "BlockType = ${metadataBlockHeader.blockType}"
             )
 
             when {
-                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
-                    val streaminfo = MetadataBlockStreaminfo(source)
-                    audioProperties = AudioProperties(
-                        sampleRate = streaminfo.sampleRate,
-                        channelCount = streaminfo.channelCount,
-                        bits = streaminfo.bits,
-                        sampleCount = streaminfo.sampleCount
-                    )
+                metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
+                    streaminfo = FlacMetadataBlockStreaminfo(source).also {
+                        audioProperties = AudioProperties(
+                            sampleRate = it.sampleRate,
+                            channelCount = it.channelCount,
+                            bits = it.bits,
+                            sampleCount = it.sampleCount
+                        )
+                    }
                 }
 
-                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT &&
-                    readStrategy.canReadMetadata() -> {
-                    val vorbisComment = VorbisComment(source)
+                metadataBlockHeader.blockType
+                    == FlacMetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT &&
+                    rwStrategy.canReadMetadata() -> {
+                    val vorbisComment = FlacVorbisComment(source)
 
                     val availableMetadataKeys = MetadataKey.OggVorbis +
                         listOf(
@@ -127,10 +161,10 @@ class FlacAudioFile(
                     }
                 }
 
-                metadataBlockHeader.blockType == MetadataBlockHeader.BLOCK_TYPE_PICTURE &&
-                    readStrategy.canReadLazyMetadata() -> {
-                    val picture = Picture(source)
-                    audioPictures.add(picture.toAudioPicture())
+                metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_PICTURE &&
+                    rwStrategy.canReadLazyMetadata() -> {
+                    val flacPicture = FlacPicture(source)
+                    audioPictures.add(flacPicture.toAudioPicture())
                 }
 
                 else -> {
