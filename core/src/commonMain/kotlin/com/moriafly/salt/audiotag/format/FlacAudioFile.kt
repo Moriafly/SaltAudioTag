@@ -1,5 +1,3 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
-
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -16,6 +14,8 @@
  * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package com.moriafly.salt.audiotag.format
 

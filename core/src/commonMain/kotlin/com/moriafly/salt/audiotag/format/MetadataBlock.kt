@@ -1,10 +1,3 @@
-@file:Suppress(
-    "unused",
-    "ktlint:standard:filename",
-    "MemberVisibilityCanBePrivate",
-    "SpellCheckingInspection"
-)
-
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -21,6 +14,13 @@
  * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+
+@file:Suppress(
+    "unused",
+    "ktlint:standard:filename",
+    "MemberVisibilityCanBePrivate",
+    "SpellCheckingInspection"
+)
 
 package com.moriafly.salt.audiotag.format
 

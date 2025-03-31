@@ -1,5 +1,3 @@
-package com.moriafly.salt.audiotag
-
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -16,6 +14,8 @@ package com.moriafly.salt.audiotag
  * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+
+package com.moriafly.salt.audiotag
 
 import com.moriafly.salt.audiotag.format.FlacAudioFile
 import com.moriafly.salt.audiotag.rw.AudioFile

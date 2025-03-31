@@ -1,9 +1,3 @@
-@file:Suppress("unused")
-
-package com.moriafly.salt.audiotag.rw
-
-import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
-
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -20,6 +14,12 @@ import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
  * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+
+@file:Suppress("unused")
+
+package com.moriafly.salt.audiotag.rw
+
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 
 @UnstableSaltAudioTagApi
 sealed class WriteOperation {

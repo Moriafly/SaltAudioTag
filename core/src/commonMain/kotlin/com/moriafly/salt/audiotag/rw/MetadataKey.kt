@@ -1,7 +1,3 @@
-@file:Suppress("unused")
-
-package com.moriafly.salt.audiotag.rw
-
 /*
  * Salt Audio Tag
  * Copyright (C) 2025 Moriafly
@@ -18,6 +14,10 @@ package com.moriafly.salt.audiotag.rw
  * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+
+@file:Suppress("unused")
+
+package com.moriafly.salt.audiotag.rw
 
 sealed class MetadataKey(
     val field: String
