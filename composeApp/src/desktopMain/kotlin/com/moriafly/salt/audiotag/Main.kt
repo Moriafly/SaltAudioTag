@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package com.moriafly.salt.audiotag
 
 import androidx.compose.ui.window.Window
@@ -8,6 +10,5 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "SaltAudioTag",
     ) {
-        App()
     }
 }
