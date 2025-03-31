@@ -52,6 +52,7 @@ kotlin {
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.jetbrains.androidx.navigation.compose)
             implementation(project(":core"))
         }
         desktopMain.dependencies {
