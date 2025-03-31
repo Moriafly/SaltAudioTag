@@ -127,7 +127,9 @@ internal data class MetadataBlockHeader(
     }
 }
 
-internal abstract class MetadataBlockData : CanWrite
+internal abstract class MetadataBlockData(
+    val blockType: BlockType
+) : CanWrite
 
 /**
  * The streaminfo metadata block has information about the whole stream, such as sample rate,
@@ -159,7 +161,7 @@ internal data class MetadataBlockDataStreaminfo(
     val bits: Int,
     val sampleCount: Long,
     val unencodedAudioDataMd5Checksum: String
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Streaminfo) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             writeShort(minBlockSize.toShort())
@@ -257,7 +259,7 @@ internal data class MetadataBlockDataStreaminfo(
 
 internal data class MetadataBlockDataPadding(
     val length: Int
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Padding) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             repeat(length) {
@@ -277,7 +279,7 @@ internal data class MetadataBlockDataPadding(
 internal data class MetadataBlockDataApplication(
     val id: Int,
     val data: ByteString
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Application) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             writeInt(id)
@@ -296,7 +298,7 @@ internal data class MetadataBlockDataApplication(
 
 internal data class MetadataBlockDataSeektable(
     val seekPoints: List<SeekPoint>
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Seektable) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             seekPoints.forEach {
@@ -343,7 +345,7 @@ internal data class MetadataBlockDataSeektable(
 internal data class MetadataBlockDataVorbisComment(
     val vendorString: String,
     val userComments: List<String>
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.VorbisComment) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             val vendorByteString = vendorString.encodeToByteString()
@@ -392,7 +394,7 @@ internal data class MetadataBlockDataVorbisComment(
  */
 internal data class MetadataBlockDataCuesheet(
     val byteString: ByteString
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Cuesheet) {
     override fun toByteString(): ByteString = byteString
 
     companion object {
@@ -412,7 +414,7 @@ internal data class MetadataBlockDataPicture(
     val colorDepth: Int,
     val colorsNumber: Int,
     val pictureData: ByteArray
-) : MetadataBlockData() {
+) : MetadataBlockData(BlockType.Picture) {
     override fun toByteString(): ByteString = Buffer()
         .apply {
             writeInt(pictureType)

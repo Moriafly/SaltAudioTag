@@ -28,6 +28,7 @@ import com.moriafly.salt.audiotag.rw.MetadataKey
 import com.moriafly.salt.audiotag.rw.MetadataKeyValue
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
+import com.mroiafly.salt.audiotag.BuildKonfig
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -79,40 +80,64 @@ class FlacAudioFile(
         val sink = SystemFileSystem.sink(path).buffered()
         sink.write(FlacSignature.HEADER)
 
-        metadataBlocks.forEach { metadataBlock ->
-            when (metadataBlock.header.blockType) {
-                BlockType.VorbisComment -> {
-                    val operationAllMetadata = operations
-                        .find { it is WriteOperation.AllMetadata }
-                        as WriteOperation.AllMetadata?
+        val writeMetadataBlockDataList = metadataBlocks.map { it.data }.toMutableList()
 
-                    if (operationAllMetadata != null) {
-                        val metadataList = operationAllMetadata.metadataList
-                        val newDataByteString = MetadataBlockDataVorbisComment(
-                            vendorString = (metadataBlock.data as MetadataBlockDataVorbisComment)
-                                .vendorString,
-                            userComments = metadataList.map { it.toFlacUserComment() }
-                        ).toByteString()
+        val operationAllMetadata = operations
+            .find { it is WriteOperation.AllMetadata }
+            as WriteOperation.AllMetadata?
+        if (operationAllMetadata != null) {
+            val metadataList = operationAllMetadata.metadataList
 
-                        sink.write(
-                            metadataBlock.header
-                                .copy(
-                                    length = newDataByteString.size
-                                )
-                                .toByteString()
-                        )
-                        sink.write(newDataByteString)
-                    } else {
-                        sink.write(metadataBlock.header.toByteString())
-                        sink.write(metadataBlock.data.toByteString())
-                    }
+            val vorbisCommentIndex = writeMetadataBlockDataList.indexOfFirst {
+                it is MetadataBlockDataVorbisComment
+            }
+            val vorbisComment = writeMetadataBlockDataList
+                .find { it is MetadataBlockDataVorbisComment }
+
+            if (vorbisComment != null) {
+                if (metadataList.isEmpty()) {
+                    writeMetadataBlockDataList.remove(vorbisComment)
+                } else {
+                    // New VorbisComment.
+                    val newVorbisComment = MetadataBlockDataVorbisComment(
+                        vendorString = (
+                            vorbisComment as MetadataBlockDataVorbisComment
+                        ).vendorString,
+                        userComments = metadataList.map { it.toFlacUserComment() }
+                    )
+                    writeMetadataBlockDataList[vorbisCommentIndex] = newVorbisComment
                 }
-
-                else -> {
-                    sink.write(metadataBlock.header.toByteString())
-                    sink.write(metadataBlock.data.toByteString())
+            } else {
+                if (metadataList.isEmpty()) {
+                    // Do nothing.
+                } else {
+                    // New VorbisComment.
+                    val newVorbisComment = MetadataBlockDataVorbisComment(
+                        vendorString = "Salt Audio Tag ${BuildKonfig.version}",
+                        userComments = metadataList.map { it.toFlacUserComment() }
+                    )
+                    writeMetadataBlockDataList.add(newVorbisComment)
                 }
             }
+        }
+
+        writeMetadataBlockDataList.forEachIndexed { index, data ->
+            val dataByteString = data.toByteString()
+
+            println(
+                "Write MetadataBlockHeader" +
+                    "index = $index, blockType = ${data.blockType}, " +
+                    "size = ${dataByteString.size}, " +
+                    "lastIndex = ${index == writeMetadataBlockDataList.lastIndex}"
+            )
+            sink.write(
+                MetadataBlockHeader(
+                    isLastMetadataBlock = index == writeMetadataBlockDataList.lastIndex,
+                    blockType = data.blockType,
+                    length = dataByteString.size
+                ).toByteString()
+            )
+            sink.write(dataByteString)
         }
 
         sink.transferFrom(source)

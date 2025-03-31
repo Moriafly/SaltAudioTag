@@ -17,16 +17,16 @@
 
 package com.moriafly.salt.audiotag.util
 
-import java.nio.charset.Charset
-
-/**
- * @see sun.nio.cs.GBK
- */
-val Charsets.GBK: Charset
-    get() = charset("GBK")
-
-/**
- * @see sun.nio.cs.GB18030
- */
-val Charsets.GB18030: Charset
-    get() = charset("GB18030")
+// import java.nio.charset.Charset
+//
+// /**
+// * @see sun.nio.cs.GBK
+// */
+// val Charsets.GBK: Charset
+//    get() = charset("GBK")
+//
+// /**
+// * @see sun.nio.cs.GB18030
+// */
+// val Charsets.GB18030: Charset
+//    get() = charset("GB18030")

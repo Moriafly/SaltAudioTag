@@ -83,4 +83,23 @@ class FlacTest {
         )
         audioFile.close()
     }
+
+    @OptIn(UnstableSaltAudioTagApi::class)
+    @Test
+    fun testWriteRemoveAllMetadata() {
+        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
+        val audioFile = SaltAudioTag.create(
+            path = path,
+            rwStrategy = RwStrategy.ReadWriteAll
+        )
+        val allMetadata = audioFile.getAllMetadata()
+
+        audioFile.write(
+            outputPath,
+            WriteOperation.AllMetadata(
+                metadataList = emptyList()
+            )
+        )
+        audioFile.close()
+    }
 }
