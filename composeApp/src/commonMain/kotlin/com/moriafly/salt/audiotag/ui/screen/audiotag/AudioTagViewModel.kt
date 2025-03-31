@@ -1,4 +1,4 @@
-package com.moriafly.salt.audiotag.ui.screen.main
+package com.moriafly.salt.audiotag.ui.screen.audiotag
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.io.buffered
 
-class MainViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(MainUiState())
+class AudioTagViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(AudioTagUiState())
     val uiState = _uiState.asStateFlow()
 
     @OptIn(UnstableSaltAudioTagApi::class)
@@ -30,8 +30,8 @@ class MainViewModel : ViewModel() {
             val allMetadata = audioFile.getAllMetadata()
             _uiState.update {
                 it.copy(
-                    metadataItems = allMetadata.map { metadata ->
-                        MainUiState.MetadataItem(
+                    metadataItemUiStates = allMetadata.map { metadata ->
+                        AudioTagUiState.MetadataItemUiState(
                             key = TextFieldState(metadata.key.field),
                             value = TextFieldState(metadata.value)
                         )

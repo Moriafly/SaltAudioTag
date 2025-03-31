@@ -15,28 +15,9 @@
  * 02110-1301 USA
  */
 
-package com.moriafly.salt.audiotag.ui.screen.main
+package com.moriafly.salt.audiotag.ui.navigation
 
-import androidx.compose.runtime.Composable
-import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
-import com.moriafly.salt.audiotag.ui.navigation.ScreenRoute
-import com.moriafly.salt.audiotag.ui.screen.basic.BasicScreenColumn
-import com.moriafly.salt.ui.Item
-import com.moriafly.salt.ui.RoundedColumn
-
-@Composable
-fun MainScreen() {
-    BasicScreenColumn(
-        title = "椒盐音频标签"
-    ) {
-        RoundedColumn {
-            val navController = LocalNavController.current
-            Item(
-                onClick = {
-                    navController.navigate(ScreenRoute.AUDIO_TAG)
-                },
-                text = "FLAC 元数据读写"
-            )
-        }
-    }
+object ScreenRoute {
+    const val MAIN = "main"
+    const val AUDIO_TAG = "audio_tag"
 }
