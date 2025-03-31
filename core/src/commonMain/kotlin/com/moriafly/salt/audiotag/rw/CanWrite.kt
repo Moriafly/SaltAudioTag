@@ -1,9 +1,4 @@
-@file:Suppress(
-    "unused",
-    "ktlint:standard:filename",
-    "MemberVisibilityCanBePrivate",
-    "SpellCheckingInspection"
-)
+package com.moriafly.salt.audiotag.rw
 
 /*
  * Salt Audio Tag
@@ -22,26 +17,8 @@
  * 02110-1301 USA
  */
 
-package com.moriafly.salt.audiotag.format
-
-import kotlinx.io.Source
 import kotlinx.io.bytestring.ByteString
-import kotlinx.io.readByteString
 
-internal class FlacSignature(
-    source: Source
-) {
-    init {
-        check(source.readByteString(4) == HEADER) {
-            "Invalid FLAC header"
-        }
-    }
-
-    companion object {
-        /**
-         * A FLAC bitstream consists of the fLaC (i.e., 0x664C6143) marker at the beginning of the
-         * stream.
-         */
-        val HEADER = ByteString(0x66, 0x4C, 0x61, 0x43)
-    }
+interface CanWrite {
+    fun toByteString(): ByteString
 }

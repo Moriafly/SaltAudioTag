@@ -8,6 +8,7 @@ import com.moriafly.salt.audiotag.rw.RwStrategy
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteString
 import kotlin.test.Test
 
 class FlacTest {
@@ -16,6 +17,12 @@ class FlacTest {
     @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun test() {
+        SystemFileSystem.source(path).buffered().readByteString().size.let {
+            println("size=$it")
+        }
+
+        return
+
         val audioFile = SaltAudioTag.create(
             path = path,
             rwStrategy = RwStrategy.ReadWriteAll
@@ -58,5 +65,6 @@ class FlacTest {
             rwStrategy = RwStrategy.ReadWriteAll
         )
         audioFile.write(outputPath)
+        audioFile.close()
     }
 }

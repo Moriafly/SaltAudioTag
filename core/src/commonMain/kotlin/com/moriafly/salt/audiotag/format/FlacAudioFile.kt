@@ -47,9 +47,8 @@ class FlacAudioFile(
 ) : AudioFile() {
     private val metadataMap = mutableMapOf<MetadataKey<*>, MutableList<*>>()
     private val audioPictures = mutableListOf<AudioPicture>()
-    private val metadataBlockHeaders = mutableListOf<FlacMetadataBlockHeader>()
+    private val metadataBlocks = mutableListOf<MetadataBlock>()
 
-    private var streaminfo: FlacMetadataBlockStreaminfo? = null
     private var audioProperties: AudioProperties? = null
 
     private fun <T> putMetadata(key: MetadataKey<T>, value: T) {
@@ -86,21 +85,34 @@ class FlacAudioFile(
             "The rwStrategy does not support writing."
         }
 
-        require(streaminfo != null) {
-            "The streaminfo is null."
-        }
-
         val sink = SystemFileSystem.sink(path).buffered()
         sink.write(FlacSignature.HEADER)
 
-        metadataBlockHeaders.forEach { metadataBlockHeader ->
-            if (metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_STREAMINFO) {
-                sink.write(metadataBlockHeader.reWrite(true))
-                sink.write(streaminfo!!.byteString)
-            }
+        metadataBlocks.forEach { metadataBlock ->
+            sink.write(metadataBlock.header.toByteString())
+            sink.write(metadataBlock.data.toByteString())
+
+//            if (metadataBlock.header.blockType == BlockType.Streaminfo) {
+//                sink.write(
+//                    metadataBlock.header
+//                        .copy(isLastMetadataBlock = true)
+//                        .toByteString()
+//                )
+//                sink.write(metadataBlock.data.toByteString())
+//            } else {
+//                sink.write(
+//                    metadataBlock.header
+//                        .copy(isLastMetadataBlock = true)
+//                        .toByteString()
+//                )
+//                sink.write(metadataBlock.data.toByteString())
+//            }
         }
 
         sink.transferFrom(source)
+
+        // Must close the sink.
+        sink.close()
     }
 
     override fun close() {
@@ -110,18 +122,13 @@ class FlacAudioFile(
     init {
         FlacSignature(source)
 
-        var metadataBlockHeader: FlacMetadataBlockHeader
+        var metadataBlockHeader: MetadataBlockHeader
         do {
-            metadataBlockHeader = FlacMetadataBlockHeader(source)
-            metadataBlockHeaders.add(metadataBlockHeader)
+            metadataBlockHeader = MetadataBlockHeader.create(source)
 
-            println(
-                "BlockType = ${metadataBlockHeader.blockType}"
-            )
-
-            when {
-                metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_STREAMINFO -> {
-                    streaminfo = FlacMetadataBlockStreaminfo(source).also {
+            val metadataBlockData: MetadataBlockData = when {
+                metadataBlockHeader.blockType == BlockType.Streaminfo -> {
+                    MetadataBlockDataStreaminfo.create(source).also {
                         audioProperties = AudioProperties(
                             sampleRate = it.sampleRate,
                             channelCount = it.channelCount,
@@ -131,46 +138,67 @@ class FlacAudioFile(
                     }
                 }
 
-                metadataBlockHeader.blockType
-                    == FlacMetadataBlockHeader.BLOCK_TYPE_VORBIS_COMMENT &&
+                metadataBlockHeader.blockType == BlockType.Padding -> {
+                    MetadataBlockDataPadding.create(source, metadataBlockHeader.length)
+                }
+
+                metadataBlockHeader.blockType == BlockType.Application -> {
+                    MetadataBlockDataApplication.create(source, metadataBlockHeader.length)
+                }
+
+                metadataBlockHeader.blockType == BlockType.Seektable -> {
+                    MetadataBlockDataSeektable.create(source, metadataBlockHeader.length)
+                }
+
+                metadataBlockHeader.blockType == BlockType.VorbisComment &&
                     rwStrategy.canReadMetadata() -> {
-                    val vorbisComment = FlacVorbisComment(source)
+                    MetadataBlockDataVorbisComment.create(source).also {
+                        val availableMetadataKeys = MetadataKey.OggVorbis +
+                            listOf(
+                                MetadataKey.Lyrics
+                            )
 
-                    val availableMetadataKeys = MetadataKey.OggVorbis +
-                        listOf(
-                            MetadataKey.Lyrics
-                        )
+                        val fieldToKeyMap = availableMetadataKeys.associateBy { it.field }
 
-                    val fieldToKeyMap = availableMetadataKeys.associateBy { it.field }
+                        it.userComments.forEach { userComment ->
+                            val parts = userComment.split('=', limit = 2)
+                            if (parts.size == 2) {
+                                val rawField = parts[0].trim()
+                                val value = parts[1].trim()
+                                val normalizedField = rawField.uppercase()
 
-                    vorbisComment.userComments.forEach { userComment ->
-                        val parts = userComment.split('=', limit = 2)
-                        if (parts.size == 2) {
-                            val rawField = parts[0].trim()
-                            val value = parts[1].trim()
-                            val normalizedField = rawField.uppercase()
-
-                            fieldToKeyMap[normalizedField]
-                                ?.let { metadataKey ->
-                                    putMetadata(metadataKey, value)
-                                }
-                                ?: run {
-                                    putMetadata(MetadataKey.custom(normalizedField), value)
-                                }
+                                fieldToKeyMap[normalizedField]
+                                    ?.let { metadataKey ->
+                                        putMetadata(metadataKey, value)
+                                    }
+                                    ?: run {
+                                        putMetadata(MetadataKey.custom(normalizedField), value)
+                                    }
+                            }
                         }
                     }
                 }
 
-                metadataBlockHeader.blockType == FlacMetadataBlockHeader.BLOCK_TYPE_PICTURE &&
-                    rwStrategy.canReadLazyMetadata() -> {
-                    val flacPicture = FlacPicture(source)
-                    audioPictures.add(flacPicture.toAudioPicture())
+                metadataBlockHeader.blockType == BlockType.Cuesheet -> {
+                    MetadataBlockDataCuesheet.create(source, metadataBlockHeader.length)
                 }
 
-                else -> {
-                    source.skip(metadataBlockHeader.length.toLong())
+                metadataBlockHeader.blockType == BlockType.Picture &&
+                    rwStrategy.canReadLazyMetadata() -> {
+                    MetadataBlockDataPicture.create(source).also {
+                        audioPictures.add(it.toAudioPicture())
+                    }
                 }
+
+                else -> error("Unsupported metadata block type: ${metadataBlockHeader.blockType}.")
             }
+
+            metadataBlocks.add(
+                MetadataBlock(
+                    header = metadataBlockHeader,
+                    data = metadataBlockData
+                )
+            )
         } while (!metadataBlockHeader.isLastMetadataBlock)
     }
 }
