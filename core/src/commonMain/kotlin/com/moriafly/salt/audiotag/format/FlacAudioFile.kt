@@ -25,6 +25,7 @@ import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.AudioProperties
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
 import com.moriafly.salt.audiotag.rw.MetadataKey
+import com.moriafly.salt.audiotag.rw.MetadataKeyValue
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import kotlinx.io.Source
@@ -45,30 +46,18 @@ class FlacAudioFile(
     private val source: Source,
     private val rwStrategy: RwStrategy
 ) : AudioFile() {
-    private val metadataMap = mutableMapOf<MetadataKey<*>, MutableList<*>>()
+    private val metadataList = mutableListOf<MetadataKeyValue>()
+    private val metadataMap = mutableMapOf<MetadataKey, List<String>>()
     private val audioPictures = mutableListOf<AudioPicture>()
     private val metadataBlocks = mutableListOf<MetadataBlock>()
 
     private var audioProperties: AudioProperties? = null
 
-    private fun <T> putMetadata(key: MetadataKey<T>, value: T) {
-        val list = metadataMap.getOrPut(key) { mutableListOf<T>() }
-        @Suppress("UNCHECKED_CAST")
-        (list as MutableList<T>).add(value)
-    }
-
     override fun getAudioProperties(): AudioProperties? = audioProperties
 
-    override fun <T> getMetadata(key: MetadataKey<T>): List<T> {
-        @Suppress("UNCHECKED_CAST")
-        return metadataMap[key]
-            ?.let {
-                it as List<T>
-            }
-            ?: emptyList()
-    }
+    override fun getMetadata(key: MetadataKey): List<String> = metadataMap[key] ?: emptyList()
 
-    override fun getAllMetadata(): Map<MetadataKey<*>, List<*>> = metadataMap
+    override fun getAllMetadata(): List<MetadataKeyValue> = metadataList
 
     override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> = when (key) {
         is LazyMetadataKey.Picture -> {
@@ -85,28 +74,45 @@ class FlacAudioFile(
             "The rwStrategy does not support writing."
         }
 
+        val operations = operation.toList()
+
         val sink = SystemFileSystem.sink(path).buffered()
         sink.write(FlacSignature.HEADER)
 
         metadataBlocks.forEach { metadataBlock ->
-            sink.write(metadataBlock.header.toByteString())
-            sink.write(metadataBlock.data.toByteString())
+            when (metadataBlock.header.blockType) {
+                BlockType.VorbisComment -> {
+                    val operationAllMetadata = operations
+                        .find { it is WriteOperation.AllMetadata }
+                        as WriteOperation.AllMetadata?
 
-//            if (metadataBlock.header.blockType == BlockType.Streaminfo) {
-//                sink.write(
-//                    metadataBlock.header
-//                        .copy(isLastMetadataBlock = true)
-//                        .toByteString()
-//                )
-//                sink.write(metadataBlock.data.toByteString())
-//            } else {
-//                sink.write(
-//                    metadataBlock.header
-//                        .copy(isLastMetadataBlock = true)
-//                        .toByteString()
-//                )
-//                sink.write(metadataBlock.data.toByteString())
-//            }
+                    if (operationAllMetadata != null) {
+                        val metadataList = operationAllMetadata.metadataList
+                        val newDataByteString = MetadataBlockDataVorbisComment(
+                            vendorString = (metadataBlock.data as MetadataBlockDataVorbisComment)
+                                .vendorString,
+                            userComments = metadataList.map { it.toFlacUserComment() }
+                        ).toByteString()
+
+                        sink.write(
+                            metadataBlock.header
+                                .copy(
+                                    length = newDataByteString.size
+                                )
+                                .toByteString()
+                        )
+                        sink.write(newDataByteString)
+                    } else {
+                        sink.write(metadataBlock.header.toByteString())
+                        sink.write(metadataBlock.data.toByteString())
+                    }
+                }
+
+                else -> {
+                    sink.write(metadataBlock.header.toByteString())
+                    sink.write(metadataBlock.data.toByteString())
+                }
+            }
         }
 
         sink.transferFrom(source)
@@ -158,7 +164,7 @@ class FlacAudioFile(
                                 MetadataKey.Lyrics
                             )
 
-                        val fieldToKeyMap = availableMetadataKeys.associateBy { it.field }
+                        val fieldToKeyMap = availableMetadataKeys.associateBy { key -> key.field }
 
                         it.userComments.forEach { userComment ->
                             val parts = userComment.split('=', limit = 2)
@@ -169,13 +175,22 @@ class FlacAudioFile(
 
                                 fieldToKeyMap[normalizedField]
                                     ?.let { metadataKey ->
-                                        putMetadata(metadataKey, value)
+                                        metadataList.add(MetadataKeyValue(metadataKey, value))
                                     }
                                     ?: run {
-                                        putMetadata(MetadataKey.custom(normalizedField), value)
+                                        val metadataKey = MetadataKey
+                                            .custom<String>(normalizedField)
+                                        metadataList.add(MetadataKeyValue(metadataKey, value))
                                     }
                             }
                         }
+
+                        val map = metadataList
+                            .groupBy { metadataKeyValue -> metadataKeyValue.key }
+                            .mapValues { (_, group) ->
+                                group.map { metadataKeyValue -> metadataKeyValue.value }
+                            }
+                        metadataMap.putAll(map)
                     }
                 }
 

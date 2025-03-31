@@ -360,6 +360,14 @@ internal data class MetadataBlockDataVorbisComment(
         }
         .readByteString()
 
+    init {
+        println(
+            """
+            VC = ${toString()}
+            """.trimIndent()
+        )
+    }
+
     companion object {
         fun create(source: Source): MetadataBlockDataVorbisComment {
             val vendorLength = source.readUIntLe().toLong()

@@ -4,11 +4,13 @@ import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
+import com.moriafly.salt.audiotag.rw.MetadataKey
+import com.moriafly.salt.audiotag.rw.MetadataKeyValue
 import com.moriafly.salt.audiotag.rw.RwStrategy
+import com.moriafly.salt.audiotag.rw.WriteOperation
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteString
 import kotlin.test.Test
 
 class FlacTest {
@@ -17,20 +19,12 @@ class FlacTest {
     @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun test() {
-        SystemFileSystem.source(path).buffered().readByteString().size.let {
-            println("size=$it")
-        }
-
-        return
-
         val audioFile = SaltAudioTag.create(
             path = path,
             rwStrategy = RwStrategy.ReadWriteAll
         )
-        audioFile.getAllMetadata().forEach { keyWithValues ->
-            keyWithValues.value.forEach { value ->
-                println("${keyWithValues.key}=$value")
-            }
+        audioFile.getAllMetadata().forEach { metadataKeyValue ->
+            println("${metadataKeyValue.key}=${metadataKeyValue.value}")
         }
 
         val audioPicture = audioFile.getLazyMetadataFirst(
@@ -65,6 +59,28 @@ class FlacTest {
             rwStrategy = RwStrategy.ReadWriteAll
         )
         audioFile.write(outputPath)
+        audioFile.close()
+    }
+
+    @OptIn(UnstableSaltAudioTagApi::class)
+    @Test
+    fun testWriteAddArtist() {
+        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
+        val audioFile = SaltAudioTag.create(
+            path = path,
+            rwStrategy = RwStrategy.ReadWriteAll
+        )
+        val allMetadata = audioFile.getAllMetadata()
+
+        audioFile.write(
+            outputPath,
+            WriteOperation.AllMetadata(
+                metadataList = allMetadata + MetadataKeyValue(
+                    key = MetadataKey.Artist,
+                    value = "Salt Audio Tag"
+                )
+            )
+        )
         audioFile.close()
     }
 }

@@ -36,12 +36,12 @@ abstract class AudioFile : AutoCloseable {
     /**
      * Returns all pre-loaded metadata values for [key], empty list if none exist.
      */
-    abstract fun <T> getMetadata(key: MetadataKey<T>): List<T>
+    abstract fun getMetadata(key: MetadataKey): List<String>
 
     /**
      * Returns all pre-loaded metadata values, empty map if none exist.
      */
-    abstract fun getAllMetadata(): Map<MetadataKey<*>, List<*>>
+    abstract fun getAllMetadata(): List<MetadataKeyValue>
 
     /**
      * Returns metadata values for [key] parsed on read, empty list if none exist.
@@ -54,7 +54,7 @@ abstract class AudioFile : AutoCloseable {
     /**
      * First value from [getMetadata] for [key], or `null` if empty.
      */
-    fun <T> getMetadataFirst(key: MetadataKey<T>): T? = getMetadata(key).firstOrNull()
+    fun getMetadataFirst(key: MetadataKey): String? = getMetadata(key).firstOrNull()
 
     /**
      * First value from [getLazyMetadata] for [key], triggers parsing on read.

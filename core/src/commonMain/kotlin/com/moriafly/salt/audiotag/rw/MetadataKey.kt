@@ -19,56 +19,56 @@ package com.moriafly.salt.audiotag.rw
  * 02110-1301 USA
  */
 
-sealed class MetadataKey<T>(
+sealed class MetadataKey(
     val field: String
 ) {
-    data object Title : MetadataKey<String>("TITLE")
+    data object Title : MetadataKey("TITLE")
 
-    data object Version : MetadataKey<String>("VERSION")
+    data object Version : MetadataKey("VERSION")
 
-    data object Album : MetadataKey<String>("ALBUM")
+    data object Album : MetadataKey("ALBUM")
 
     @Suppress("SpellCheckingInspection")
-    data object TrackNumber : MetadataKey<String>("TRACKNUMBER")
+    data object TrackNumber : MetadataKey("TRACKNUMBER")
 
-    data object Artist : MetadataKey<String>("ARTIST")
+    data object Artist : MetadataKey("ARTIST")
 
-    data object Performer : MetadataKey<String>("PERFORMER")
+    data object Performer : MetadataKey("PERFORMER")
 
-    data object Copyright : MetadataKey<String>("COPYRIGHT")
+    data object Copyright : MetadataKey("COPYRIGHT")
 
-    data object License : MetadataKey<String>("LICENSE")
+    data object License : MetadataKey("LICENSE")
 
-    data object Organization : MetadataKey<String>("ORGANIZATION")
+    data object Organization : MetadataKey("ORGANIZATION")
 
-    data object Description : MetadataKey<String>("DESCRIPTION")
+    data object Description : MetadataKey("DESCRIPTION")
 
-    data object Genre : MetadataKey<String>("GENRE")
+    data object Genre : MetadataKey("GENRE")
 
-    data object Date : MetadataKey<String>("DATE")
+    data object Date : MetadataKey("DATE")
 
-    data object Location : MetadataKey<String>("LOCATION")
+    data object Location : MetadataKey("LOCATION")
 
-    data object Contact : MetadataKey<String>("CONTACT")
+    data object Contact : MetadataKey("CONTACT")
 
     /**
      * ISRC number for the track; see the [ISRC intro page](https://isrc.ifpi.org/) for more
      * information on ISRC numbers.
      */
-    data object ISRC : MetadataKey<String>("ISRC")
+    data object ISRC : MetadataKey("ISRC")
 
-    data object Lyrics : MetadataKey<String>("LYRICS")
+    data object Lyrics : MetadataKey("LYRICS")
 
-    class Custom<T>(
+    class Custom(
         field: String
-    ) : MetadataKey<T>(field) {
+    ) : MetadataKey(field) {
         override fun toString(): String = field.uppercase()
     }
 
     /**
      * Returns true if this key is a custom key.
      */
-    fun isCustom(): Boolean = this is Custom<*>
+    fun isCustom(): Boolean = this is Custom
 
     companion object {
         /**
@@ -92,6 +92,13 @@ sealed class MetadataKey<T>(
             ISRC
         )
 
-        fun <T> custom(field: String) = Custom<T>(field)
+        fun <T> custom(field: String) = Custom(field)
     }
+}
+
+data class MetadataKeyValue(
+    val key: MetadataKey,
+    val value: String
+) {
+    fun toFlacUserComment(): String = "${key.field}=$value"
 }

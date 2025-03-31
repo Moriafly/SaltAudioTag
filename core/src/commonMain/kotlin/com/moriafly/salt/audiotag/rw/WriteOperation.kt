@@ -23,8 +23,7 @@ import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 
 @UnstableSaltAudioTagApi
 sealed class WriteOperation {
-    data class AddMetadata<T>(
-        val key: MetadataKey<T>,
-        val value: T
+    data class AllMetadata(
+        val metadataList: List<MetadataKeyValue>
     ) : WriteOperation()
 }
