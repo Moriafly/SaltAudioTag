@@ -18,6 +18,7 @@ kotlin = "2.1.0"
 kotlinx-coroutines = "1.10.1"
 kotlinx-io = "0.7.0"
 buildkonfig = "0.15.1"
+salt-ui = "2.4.0-alpha01"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -35,6 +36,7 @@ androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle
 kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 kotlinx-io-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlinx-io-bytestring = { group = "org.jetbrains.kotlinx", name = "kotlinx-io-bytestring", version.ref = "kotlinx-io" }
+salt-ui = { group = "io.github.moriafly", name = "salt-ui", version.ref = "salt-ui" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
