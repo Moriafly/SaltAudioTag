@@ -21,26 +21,33 @@ import com.moriafly.salt.audiotag.format.FlacAudioFile
 import com.moriafly.salt.audiotag.rw.AudioFile
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.util.extension
+import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
 object SaltAudioTag {
-    @OptIn(UnstableSaltAudioTagApi::class)
-    fun create(
-        path: Path
-    ): AudioFile = create(path, RwStrategy.ReadWriteAll)
-
     @UnstableSaltAudioTagApi
     fun create(
         path: Path,
-        rwStrategy: RwStrategy
+        rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
     ): AudioFile {
         val source = SystemFileSystem.source(path).buffered()
 
-        return when (path.extension) {
-            "flac" -> FlacAudioFile(source, rwStrategy)
-            else -> throw UnsupportedOperationException("Unsupported file format")
-        }
+        return create(
+            source = source,
+            extension = path.extension,
+            rwStrategy = rwStrategy
+        )
+    }
+
+    @UnstableSaltAudioTagApi
+    fun create(
+        source: Source,
+        extension: String,
+        rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
+    ): AudioFile = when (extension) {
+        "flac" -> FlacAudioFile(source, rwStrategy)
+        else -> throw UnsupportedOperationException("Unsupported file format")
     }
 }

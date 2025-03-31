@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.moriafly.salt.audiotag.ui.screen.MainScreen
+import com.moriafly.salt.audiotag.ui.screen.main.MainScreen
 import com.moriafly.salt.ui.SaltTheme
 
 @Composable
