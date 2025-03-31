@@ -31,7 +31,6 @@ class FlacTest {
             LazyMetadataKey.Picture(AudioPicture.PictureType.BackCover)
         )
         if (audioPicture != null) {
-            // 写入文件
             val sinkPath = Path("C:\\Users\\moria\\Desktop\\frontCover.jpg")
             val sink = SystemFileSystem.sink(sinkPath).buffered()
             println(
@@ -92,8 +91,6 @@ class FlacTest {
             path = path,
             rwStrategy = RwStrategy.ReadWriteAll
         )
-        val allMetadata = audioFile.getAllMetadata()
-
         audioFile.write(
             outputPath,
             WriteOperation.AllMetadata(

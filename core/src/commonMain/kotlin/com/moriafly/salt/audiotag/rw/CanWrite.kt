@@ -19,6 +19,6 @@ package com.moriafly.salt.audiotag.rw
 
 import kotlinx.io.bytestring.ByteString
 
-interface CanWrite {
+internal interface CanWrite {
     fun toByteString(): ByteString
 }
