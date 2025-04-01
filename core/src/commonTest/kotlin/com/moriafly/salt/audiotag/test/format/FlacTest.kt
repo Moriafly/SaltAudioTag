@@ -21,8 +21,7 @@ import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
-import com.moriafly.salt.audiotag.rw.MetadataKey
-import com.moriafly.salt.audiotag.rw.MetadataKeyValue
+import com.moriafly.salt.audiotag.rw.Metadata
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import kotlinx.io.buffered
@@ -62,8 +61,6 @@ class FlacTest {
             )
             sink.write(audioPicture.pictureData)
         }
-
-        audioFile.close()
     }
 
     @OptIn(UnstableSaltAudioTagApi::class)
@@ -74,8 +71,7 @@ class FlacTest {
             path = path,
             rwStrategy = RwStrategy.ReadWriteAll
         )
-        audioFile.write(outputPath)
-        audioFile.close()
+        // audioFile.write(outputPath)
     }
 
     @OptIn(UnstableSaltAudioTagApi::class)
@@ -89,15 +85,15 @@ class FlacTest {
         val allMetadata = audioFile.getAllMetadata()
 
         audioFile.write(
-            outputPath,
+            input = path,
+            output = outputPath,
             WriteOperation.AllMetadata(
-                metadataList = allMetadata + MetadataKeyValue(
-                    key = MetadataKey.Artist,
+                metadataList = allMetadata + Metadata(
+                    key = "ARTIST",
                     value = "Salt Audio Tag"
                 )
             )
         )
-        audioFile.close()
     }
 
     @OptIn(UnstableSaltAudioTagApi::class)
@@ -109,11 +105,11 @@ class FlacTest {
             rwStrategy = RwStrategy.ReadWriteAll
         )
         audioFile.write(
-            outputPath,
+            input = path,
+            output = outputPath,
             WriteOperation.AllMetadata(
                 metadataList = emptyList()
             )
         )
-        audioFile.close()
     }
 }

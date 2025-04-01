@@ -20,14 +20,23 @@
 package com.moriafly.salt.audiotag.rw
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import kotlinx.io.Sink
+import kotlinx.io.Source
+import kotlinx.io.buffered
 import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 
 /**
  * Base class for auto-closable audio files with metadata support.
  *
  * @author Moriafly
  */
-abstract class AudioFile : AutoCloseable {
+abstract class AudioFile {
+    /**
+     * Only used for [write].
+     */
+    protected abstract fun skipToAudioData(source: Source)
+
     /**
      * Returns detected audio properties or `null` if unavailable.
      */
@@ -36,12 +45,12 @@ abstract class AudioFile : AutoCloseable {
     /**
      * Returns all pre-loaded metadata values for [key], empty list if none exist.
      */
-    abstract fun getMetadata(key: MetadataKey): List<String>
+    abstract fun getMetadataValues(key: String): List<String>
 
     /**
      * Returns all pre-loaded metadata values, empty map if none exist.
      */
-    abstract fun getAllMetadata(): List<MetadataKeyValue>
+    abstract fun getAllMetadata(): List<Metadata>
 
     /**
      * Returns metadata values for [key] parsed on read, empty list if none exist.
@@ -49,15 +58,24 @@ abstract class AudioFile : AutoCloseable {
     abstract fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>
 
     @UnstableSaltAudioTagApi
-    abstract fun write(path: Path, vararg operation: WriteOperation)
+    abstract fun write(input: Source, output: Sink, vararg operation: WriteOperation)
 
     /**
-     * First value from [getMetadata] for [key], or `null` if empty.
+     * First value from [getMetadataValues] for [key], or `null` if empty.
      */
-    fun getMetadataFirst(key: MetadataKey): String? = getMetadata(key).firstOrNull()
+    fun getMetadataFirstValue(key: String): String? = getMetadataValues(key).firstOrNull()
 
     /**
      * First value from [getLazyMetadata] for [key], triggers parsing on read.
      */
     fun <T> getLazyMetadataFirst(key: LazyMetadataKey<T>): T? = getLazyMetadata(key).firstOrNull()
+
+    @OptIn(UnstableSaltAudioTagApi::class)
+    fun write(input: Path, output: Path, vararg operation: WriteOperation) {
+        write(
+            input = SystemFileSystem.source(input).buffered(),
+            output = SystemFileSystem.sink(output).buffered(),
+            *operation
+        )
+    }
 }

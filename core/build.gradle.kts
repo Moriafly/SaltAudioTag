@@ -10,7 +10,11 @@ plugins {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xwhen-guards")
+        freeCompilerArgs.addAll(
+            "-Xexpect-actual-classes",
+            "-Xcontext-receivers",
+            "-Xwhen-guards"
+        )
     }
 
     androidTarget {

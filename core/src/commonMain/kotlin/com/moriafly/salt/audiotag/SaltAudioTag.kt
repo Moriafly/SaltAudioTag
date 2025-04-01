@@ -31,15 +31,11 @@ object SaltAudioTag {
     fun create(
         path: Path,
         rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
-    ): AudioFile {
-        val source = SystemFileSystem.source(path).buffered()
-
-        return create(
-            source = source,
-            extension = path.extension,
-            rwStrategy = rwStrategy
-        )
-    }
+    ): AudioFile = create(
+        source = SystemFileSystem.source(path).buffered(),
+        extension = path.extension,
+        rwStrategy = rwStrategy
+    )
 
     @UnstableSaltAudioTagApi
     fun create(
@@ -48,6 +44,6 @@ object SaltAudioTag {
         rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
     ): AudioFile = when (extension) {
         "flac" -> FlacAudioFile(source, rwStrategy)
-        else -> throw UnsupportedOperationException("Unsupported file format")
+        else -> throw UnsupportedOperationException("Unsupported file format.")
     }
 }

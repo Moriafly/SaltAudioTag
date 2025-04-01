@@ -44,7 +44,7 @@ fun AppNavigation() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = "",
+            startDestination = ScreenRoute.MAIN,
             enterTransition = { enterTransition },
             exitTransition = { exitTransition },
             popEnterTransition = { popEnterTransition },

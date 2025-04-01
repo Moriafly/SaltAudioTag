@@ -15,15 +15,10 @@
  * 02110-1301 USA
  */
 
-@file:Suppress("unused")
+package com.moriafly.salt.audiotag.io
 
-package com.moriafly.salt.audiotag.rw
+import kotlinx.io.files.Path
 
-import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
-
-@UnstableSaltAudioTagApi
-sealed class WriteOperation {
-    data class AllMetadata(
-        val metadataList: List<Metadata>
-    ) : WriteOperation()
+internal expect object ModuleFileSystem {
+    fun createTempPath(context: PlatformContext): Path
 }

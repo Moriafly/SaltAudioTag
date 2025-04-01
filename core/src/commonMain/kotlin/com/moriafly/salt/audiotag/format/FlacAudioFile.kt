@@ -20,18 +20,19 @@
 package com.moriafly.salt.audiotag.format
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import com.moriafly.salt.audiotag.io.ModuleFileSystem
+import com.moriafly.salt.audiotag.io.PlatformContext
 import com.moriafly.salt.audiotag.rw.AudioFile
 import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.AudioProperties
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
-import com.moriafly.salt.audiotag.rw.MetadataKey
-import com.moriafly.salt.audiotag.rw.MetadataKeyValue
+import com.moriafly.salt.audiotag.rw.Metadata
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.mroiafly.salt.audiotag.BuildKonfig
+import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.write
 
@@ -45,20 +46,30 @@ import kotlinx.io.write
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacAudioFile(
     private val source: Source,
-    private val rwStrategy: RwStrategy
+    rwStrategy: RwStrategy
 ) : AudioFile() {
-    private val metadataList = mutableListOf<MetadataKeyValue>()
-    private val metadataMap = mutableMapOf<MetadataKey, List<String>>()
+    private val metadataList = mutableListOf<Metadata>()
+    private val metadataGroupMap = mutableMapOf<String, List<String>>()
     private val audioPictures = mutableListOf<AudioPicture>()
     private val metadataBlocks = mutableListOf<MetadataBlock>()
 
     private var audioProperties: AudioProperties? = null
 
+    override fun skipToAudioData(source: Source) {
+        // Skip the FLAC signature and metadata.
+        source.skip(FlacSignature.HEADER.size.toLong())
+        var metadataBlockHeader: MetadataBlockHeader
+        do {
+            metadataBlockHeader = MetadataBlockHeader.create(source)
+            source.skip(metadataBlockHeader.length.toLong())
+        } while (!metadataBlockHeader.isLastMetadataBlock)
+    }
+
     override fun getAudioProperties(): AudioProperties? = audioProperties
 
-    override fun getMetadata(key: MetadataKey): List<String> = metadataMap[key] ?: emptyList()
+    override fun getMetadataValues(key: String): List<String> = metadataGroupMap[key] ?: emptyList()
 
-    override fun getAllMetadata(): List<MetadataKeyValue> = metadataList
+    override fun getAllMetadata(): List<Metadata> = metadataList
 
     override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> = when (key) {
         is LazyMetadataKey.Picture -> {
@@ -70,19 +81,22 @@ class FlacAudioFile(
     }
 
     @UnstableSaltAudioTagApi
-    override fun write(path: Path, vararg operation: WriteOperation) {
-        require(rwStrategy == RwStrategy.ReadWriteAll) {
-            "The rwStrategy does not support writing."
-        }
+    override fun write(input: Source, output: Sink, vararg operation: WriteOperation) {
+        val tempPath = ModuleFileSystem.createTempPath(PlatformContext())
+        val tempSink = SystemFileSystem.sink(tempPath).buffered()
+        tempSink.transferFrom(input)
+        input.close()
+        tempSink.close()
 
-        val operations = operation.toList()
+        val tempInput = SystemFileSystem.source(tempPath).buffered()
 
-        val sink = SystemFileSystem.sink(path).buffered()
-        sink.write(FlacSignature.HEADER)
+        skipToAudioData(tempInput)
+
+        output.write(FlacSignature.HEADER)
 
         val writeMetadataBlockDataList = metadataBlocks.map { it.data }.toMutableList()
 
-        val operationAllMetadata = operations
+        val operationAllMetadata = operation
             .find { it is WriteOperation.AllMetadata }
             as WriteOperation.AllMetadata?
         if (operationAllMetadata != null) {
@@ -113,7 +127,7 @@ class FlacAudioFile(
                 } else {
                     // New VorbisComment.
                     val newVorbisComment = MetadataBlockDataVorbisComment(
-                        vendorString = "Salt Audio Tag ${BuildKonfig.version}",
+                        vendorString = VENDOR_STRING,
                         userComments = metadataList.map { it.toFlacUserComment() }
                     )
                     writeMetadataBlockDataList.add(newVorbisComment)
@@ -130,24 +144,22 @@ class FlacAudioFile(
                     "size = ${dataByteString.size}, " +
                     "lastIndex = ${index == writeMetadataBlockDataList.lastIndex}"
             )
-            sink.write(
+            output.write(
                 MetadataBlockHeader(
                     isLastMetadataBlock = index == writeMetadataBlockDataList.lastIndex,
                     blockType = data.blockType,
                     length = dataByteString.size
                 ).toByteString()
             )
-            sink.write(dataByteString)
+            output.write(dataByteString)
         }
 
-        sink.transferFrom(source)
+        output.transferFrom(tempInput)
 
-        // Must close the sink.
-        sink.close()
-    }
+        tempInput.close()
+        SystemFileSystem.delete(tempPath)
 
-    override fun close() {
-        source.close()
+        output.close()
     }
 
     init {
@@ -184,13 +196,6 @@ class FlacAudioFile(
                 metadataBlockHeader.blockType == BlockType.VorbisComment &&
                     rwStrategy.canReadMetadata() -> {
                     MetadataBlockDataVorbisComment.create(source).also {
-                        val availableMetadataKeys = MetadataKey.OggVorbis +
-                            listOf(
-                                MetadataKey.Lyrics
-                            )
-
-                        val fieldToKeyMap = availableMetadataKeys.associateBy { key -> key.field }
-
                         it.userComments.forEach { userComment ->
                             val parts = userComment.split('=', limit = 2)
                             if (parts.size == 2) {
@@ -198,15 +203,7 @@ class FlacAudioFile(
                                 val value = parts[1].trim()
                                 val normalizedField = rawField.uppercase()
 
-                                fieldToKeyMap[normalizedField]
-                                    ?.let { metadataKey ->
-                                        metadataList.add(MetadataKeyValue(metadataKey, value))
-                                    }
-                                    ?: run {
-                                        val metadataKey = MetadataKey
-                                            .custom<String>(normalizedField)
-                                        metadataList.add(MetadataKeyValue(metadataKey, value))
-                                    }
+                                metadataList.add(Metadata(normalizedField, value))
                             }
                         }
 
@@ -215,7 +212,7 @@ class FlacAudioFile(
                             .mapValues { (_, group) ->
                                 group.map { metadataKeyValue -> metadataKeyValue.value }
                             }
-                        metadataMap.putAll(map)
+                        metadataGroupMap.putAll(map)
                     }
                 }
 
@@ -240,5 +237,9 @@ class FlacAudioFile(
                 )
             )
         } while (!metadataBlockHeader.isLastMetadataBlock)
+    }
+
+    companion object {
+        private val VENDOR_STRING = "Salt Audio Tag ${BuildKonfig.version}"
     }
 }

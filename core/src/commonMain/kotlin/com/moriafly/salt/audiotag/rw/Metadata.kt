@@ -19,11 +19,29 @@
 
 package com.moriafly.salt.audiotag.rw
 
-import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+@Suppress("SpellCheckingInspection")
+data class Metadata(
+    val key: String,
+    val value: String
+) {
+    fun toFlacUserComment(): String = "$key=$value"
 
-@UnstableSaltAudioTagApi
-sealed class WriteOperation {
-    data class AllMetadata(
-        val metadataList: List<Metadata>
-    ) : WriteOperation()
+    companion object {
+        const val TITLE = "TITLE"
+        const val VERSION = "VERSION"
+        const val ALBUM = "ALBUM"
+        const val TRACKNUMBER = "TRACKNUMBER"
+        const val ARTIST = "ARTIST"
+        const val PERFORMER = "PERFORMER"
+        const val COPYRIGHT = "COPYRIGHT"
+        const val LICENSE = "LICENSE"
+        const val ORGANIZATION = "ORGANIZATION"
+        const val DESCRIPTION = "DESCRIPTION"
+        const val GENRE = "GENRE"
+        const val DATE = "DATE"
+        const val LOCATION = "LOCATION"
+        const val CONTACT = "CONTACT"
+        const val ISRC = "ISRC"
+        const val LYRICS = "LYRICS"
+    }
 }
