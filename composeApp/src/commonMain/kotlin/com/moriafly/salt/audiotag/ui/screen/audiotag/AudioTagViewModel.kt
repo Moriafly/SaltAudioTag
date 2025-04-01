@@ -65,22 +65,17 @@ class AudioTagViewModel : ViewModel() {
             }
 
             platformFile?.let {
+                val source = it.source().buffered()
                 val sink = it.sink().buffered()
 
-                val buffer = audioFile?.write(
+                audioFile?.write(
+                    input = source,
+                    output = sink,
                     WriteOperation.AllMetadata(
                         allMetadata
                     )
                 )
-
-                if (buffer != null) {
-                    sink.write(buffer, buffer.size)
-                    buffer.close()
-                    sink.close()
-                }
             }
-
-            audioFile?.close()
 
             withContext(Dispatchers.Main) {
                 onSuccess()

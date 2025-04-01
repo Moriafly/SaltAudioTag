@@ -20,5 +20,5 @@ package com.moriafly.salt.audiotag.io
 import kotlinx.io.files.Path
 
 internal expect object ModuleFileSystem {
-    fun createTempPath(context: PlatformContext): Path
+    fun createTempPath(): Path
 }

@@ -21,7 +21,6 @@ package com.moriafly.salt.audiotag.format
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.io.ModuleFileSystem
-import com.moriafly.salt.audiotag.io.PlatformContext
 import com.moriafly.salt.audiotag.rw.AudioFile
 import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.AudioProperties
@@ -82,7 +81,7 @@ class FlacAudioFile(
 
     @UnstableSaltAudioTagApi
     override fun write(input: Source, output: Sink, vararg operation: WriteOperation) {
-        val tempPath = ModuleFileSystem.createTempPath(PlatformContext())
+        val tempPath = ModuleFileSystem.createTempPath()
         val tempSink = SystemFileSystem.sink(tempPath).buffered()
         tempSink.transferFrom(input)
         input.close()
