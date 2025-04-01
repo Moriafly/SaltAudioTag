@@ -7,10 +7,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
 import com.moriafly.salt.ui.TitleBar
 import com.moriafly.salt.ui.UnstableSaltUiApi
 import com.moriafly.salt.ui.ext.safeMainIgnoringVisibilityPadding
 import com.moriafly.salt.ui.thenIf
+import com.moriafly.salt.ui.util.SystemUtil
 
 @OptIn(UnstableSaltUiApi::class)
 @Composable
@@ -22,10 +24,14 @@ fun BasicScreenColumn(
 ) {
     Column(
         modifier = Modifier
-            .safeMainIgnoringVisibilityPadding()
+            .thenIf(SystemUtil.os.isAndroid()) {
+                safeMainIgnoringVisibilityPadding()
+            }
     ) {
+        val navController = LocalNavController.current
         TitleBar(
             onBack = {
+                navController.popBackStack()
             },
             text = title,
             showBackBtn = showBackBtn

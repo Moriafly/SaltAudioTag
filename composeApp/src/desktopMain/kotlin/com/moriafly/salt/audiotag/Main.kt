@@ -27,5 +27,6 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "SaltAudioTag",
     ) {
+        MainActivityContent()
     }
 }

@@ -13,16 +13,20 @@ import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.sink
 import io.github.vinceglb.filekit.source
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
 
 class AudioTagViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AudioTagUiState())
     val uiState = _uiState.asStateFlow()
+
+    private val _saveResult = MutableSharedFlow<Boolean>()
+    val saveResult = _saveResult.asSharedFlow()
 
     private var platformFile: PlatformFile? = null
     private var audioFile: AudioFile? = null
@@ -35,8 +39,9 @@ class AudioTagViewModel : ViewModel() {
             val audioFile = SaltAudioTag.create(
                 source = platformFile.source().buffered(),
                 extension = platformFile.extension
-            )
-            this@AudioTagViewModel.audioFile = audioFile
+            ).also {
+                this@AudioTagViewModel.audioFile = it
+            }
 
             val allMetadata = audioFile.getAllMetadata()
             _uiState.update {
@@ -53,10 +58,16 @@ class AudioTagViewModel : ViewModel() {
     }
 
     @OptIn(UnstableSaltAudioTagApi::class)
-    fun save(
-        onSuccess: () -> Unit
-    ) {
+    fun save() {
         viewModelScope.launch(Dispatchers.IO) {
+            val platformFile = this@AudioTagViewModel.platformFile
+            val audioFile = this@AudioTagViewModel.audioFile
+
+            if (platformFile == null || audioFile == null) {
+                _saveResult.emit(false)
+                return@launch
+            }
+
             val allMetadata = _uiState.value.metadataItemUiStates.map { metadataItemUiState ->
                 Metadata(
                     key = metadataItemUiState.key.text.toString(),
@@ -64,22 +75,18 @@ class AudioTagViewModel : ViewModel() {
                 )
             }
 
-            platformFile?.let {
-                val source = it.source().buffered()
-                val sink = it.sink().buffered()
+            val source = platformFile.source().buffered()
+            val sink = platformFile.sink().buffered()
 
-                audioFile?.write(
-                    input = source,
-                    output = sink,
-                    WriteOperation.AllMetadata(
-                        allMetadata
-                    )
+            audioFile.write(
+                input = source,
+                output = sink,
+                WriteOperation.AllMetadata(
+                    allMetadata
                 )
-            }
+            )
 
-            withContext(Dispatchers.Main) {
-                onSuccess()
-            }
+            _saveResult.emit(true)
         }
     }
 }

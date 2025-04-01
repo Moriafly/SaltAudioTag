@@ -7,7 +7,7 @@ import kotlin.uuid.Uuid
 
 internal actual object ModuleFileSystem {
     @OptIn(ExperimentalUuidApi::class)
-    actual fun createTempPath(context: PlatformContext): Path {
+    actual fun createTempPath(): Path {
         val tempFile = File.createTempFile(Uuid.random().toHexString(), null)
         return Path(tempFile.absolutePath)
     }

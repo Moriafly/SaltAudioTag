@@ -22,13 +22,21 @@ import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
 import com.moriafly.salt.audiotag.ui.navigation.ScreenRoute
 import com.moriafly.salt.audiotag.ui.screen.basic.BasicScreenColumn
 import com.moriafly.salt.ui.Item
+import com.moriafly.salt.ui.ItemOuterLargeTitle
 import com.moriafly.salt.ui.RoundedColumn
+import com.moriafly.salt.ui.UnstableSaltUiApi
 
+@OptIn(UnstableSaltUiApi::class)
 @Composable
 fun MainScreen() {
     BasicScreenColumn(
-        title = "椒盐音频标签"
+        title = "",
+        showBackBtn = false
     ) {
+        ItemOuterLargeTitle(
+            text = "椒盐音频标签",
+            sub = "版本"
+        )
         RoundedColumn {
             val navController = LocalNavController.current
             Item(

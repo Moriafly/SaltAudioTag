@@ -54,6 +54,13 @@ fun AudioTagScreen(
             launcher.launch()
         }
 
+        val navController = LocalNavController.current
+        LaunchedEffect(Unit) {
+            viewModel.saveResult.collect {
+                navController.popBackStack()
+            }
+        }
+
         val uiState by viewModel.uiState.collectAsState()
         val metadataItems = uiState.metadataItemUiStates
 
@@ -70,13 +77,10 @@ fun AudioTagScreen(
         }
 
         BottomBar {
-            val navController = LocalNavController.current
             BottomBarItem(
                 state = true,
                 onClick = {
-                    viewModel.save {
-                        navController.popBackStack()
-                    }
+                    viewModel.save()
                 },
                 painter = rememberVectorPainter(SaltIcons.Success),
                 text = "保存"
