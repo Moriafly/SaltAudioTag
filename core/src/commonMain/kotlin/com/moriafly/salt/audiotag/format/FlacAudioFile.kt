@@ -54,6 +54,52 @@ class FlacAudioFile(
 
     private var audioProperties: AudioProperties? = null
 
+    private fun getWriteMetadataBlockDataList(
+        operation: WriteOperation.AllMetadata?
+    ): List<MetadataBlockData> {
+        val writeMetadataBlockDataList = metadataBlocks.map { it.data }.toMutableList()
+
+        if (operation == null) {
+            return writeMetadataBlockDataList
+        }
+
+        val metadataList = operation.metadataList
+
+        val vorbisCommentIndex = writeMetadataBlockDataList.indexOfFirst {
+            it is MetadataBlockDataVorbisComment
+        }
+        val vorbisComment = writeMetadataBlockDataList
+            .find { it is MetadataBlockDataVorbisComment }
+
+        if (vorbisComment != null) {
+            if (metadataList.isEmpty()) {
+                writeMetadataBlockDataList.remove(vorbisComment)
+            } else {
+                // New VorbisComment.
+                val newVorbisComment = MetadataBlockDataVorbisComment(
+                    vendorString = (
+                        vorbisComment as MetadataBlockDataVorbisComment
+                    ).vendorString,
+                    userComments = metadataList.map { it.toFlacUserComment() }
+                )
+                writeMetadataBlockDataList[vorbisCommentIndex] = newVorbisComment
+            }
+        } else {
+            if (metadataList.isEmpty()) {
+                // Do nothing.
+            } else {
+                // New VorbisComment.
+                val newVorbisComment = MetadataBlockDataVorbisComment(
+                    vendorString = VENDOR_STRING,
+                    userComments = metadataList.map { it.toFlacUserComment() }
+                )
+                writeMetadataBlockDataList.add(newVorbisComment)
+            }
+        }
+
+        return writeMetadataBlockDataList
+    }
+
     override fun skipToAudioData(source: Source) {
         // Skip the FLAC signature and metadata.
         source.skip(FlacSignature.HEADER.size.toLong())
@@ -80,162 +126,137 @@ class FlacAudioFile(
     }
 
     @UnstableSaltAudioTagApi
-    override fun write(input: Source, output: Sink, vararg operation: WriteOperation) {
+    override fun write(
+        input: () -> Source,
+        output: () -> Sink,
+        vararg operation: WriteOperation
+    ) {
         val tempPath = ModuleFileSystem.createTempPath()
-        val tempSink = SystemFileSystem.sink(tempPath).buffered()
-        tempSink.transferFrom(input)
-        input.close()
-        tempSink.close()
 
-        val tempInput = SystemFileSystem.source(tempPath).buffered()
+        try {
+            val operationAllMetadata = operation
+                .find { it is WriteOperation.AllMetadata }
+                as WriteOperation.AllMetadata?
 
-        skipToAudioData(tempInput)
+            val writeMetadataBlockDataList = getWriteMetadataBlockDataList(operationAllMetadata)
 
-        output.write(FlacSignature.HEADER)
-
-        val writeMetadataBlockDataList = metadataBlocks.map { it.data }.toMutableList()
-
-        val operationAllMetadata = operation
-            .find { it is WriteOperation.AllMetadata }
-            as WriteOperation.AllMetadata?
-        if (operationAllMetadata != null) {
-            val metadataList = operationAllMetadata.metadataList
-
-            val vorbisCommentIndex = writeMetadataBlockDataList.indexOfFirst {
-                it is MetadataBlockDataVorbisComment
-            }
-            val vorbisComment = writeMetadataBlockDataList
-                .find { it is MetadataBlockDataVorbisComment }
-
-            if (vorbisComment != null) {
-                if (metadataList.isEmpty()) {
-                    writeMetadataBlockDataList.remove(vorbisComment)
-                } else {
-                    // New VorbisComment.
-                    val newVorbisComment = MetadataBlockDataVorbisComment(
-                        vendorString = (
-                            vorbisComment as MetadataBlockDataVorbisComment
-                        ).vendorString,
-                        userComments = metadataList.map { it.toFlacUserComment() }
-                    )
-                    writeMetadataBlockDataList[vorbisCommentIndex] = newVorbisComment
-                }
-            } else {
-                if (metadataList.isEmpty()) {
-                    // Do nothing.
-                } else {
-                    // New VorbisComment.
-                    val newVorbisComment = MetadataBlockDataVorbisComment(
-                        vendorString = VENDOR_STRING,
-                        userComments = metadataList.map { it.toFlacUserComment() }
-                    )
-                    writeMetadataBlockDataList.add(newVorbisComment)
+            SystemFileSystem.sink(tempPath).buffered().use { tempSink ->
+                input().use { inputSource ->
+                    tempSink.transferFrom(inputSource)
                 }
             }
+
+            SystemFileSystem.source(tempPath).buffered().use { tempInput ->
+                skipToAudioData(tempInput)
+
+                output().use { outputSink ->
+                    outputSink.write(FlacSignature.HEADER)
+                    writeMetadataBlockDataList.forEachIndexed { index, data ->
+                        val dataByteString = data.toByteString()
+
+                        println(
+                            "Write MetadataBlockHeader" +
+                                "index = $index, blockType = ${data.blockType}, " +
+                                "size = ${dataByteString.size}, " +
+                                "lastIndex = ${index == writeMetadataBlockDataList.lastIndex}"
+                        )
+                        outputSink.write(
+                            MetadataBlockHeader(
+                                isLastMetadataBlock = index == writeMetadataBlockDataList.lastIndex,
+                                blockType = data.blockType,
+                                length = dataByteString.size
+                            ).toByteString()
+                        )
+                        outputSink.write(dataByteString)
+                    }
+
+                    outputSink.transferFrom(tempInput)
+                }
+            }
+        } finally {
+            SystemFileSystem.delete(tempPath)
         }
-
-        writeMetadataBlockDataList.forEachIndexed { index, data ->
-            val dataByteString = data.toByteString()
-
-            println(
-                "Write MetadataBlockHeader" +
-                    "index = $index, blockType = ${data.blockType}, " +
-                    "size = ${dataByteString.size}, " +
-                    "lastIndex = ${index == writeMetadataBlockDataList.lastIndex}"
-            )
-            output.write(
-                MetadataBlockHeader(
-                    isLastMetadataBlock = index == writeMetadataBlockDataList.lastIndex,
-                    blockType = data.blockType,
-                    length = dataByteString.size
-                ).toByteString()
-            )
-            output.write(dataByteString)
-        }
-
-        output.transferFrom(tempInput)
-
-        tempInput.close()
-        SystemFileSystem.delete(tempPath)
-
-        output.close()
     }
 
     init {
-        FlacSignature(source)
+        source.use {
+            FlacSignature(source)
 
-        var metadataBlockHeader: MetadataBlockHeader
-        do {
-            metadataBlockHeader = MetadataBlockHeader.create(source)
+            var metadataBlockHeader: MetadataBlockHeader
+            do {
+                metadataBlockHeader = MetadataBlockHeader.create(source)
 
-            val metadataBlockData: MetadataBlockData = when {
-                metadataBlockHeader.blockType == BlockType.Streaminfo -> {
-                    MetadataBlockDataStreaminfo.create(source).also {
-                        audioProperties = AudioProperties(
-                            sampleRate = it.sampleRate,
-                            channelCount = it.channelCount,
-                            bits = it.bits,
-                            sampleCount = it.sampleCount
-                        )
-                    }
-                }
-
-                metadataBlockHeader.blockType == BlockType.Padding -> {
-                    MetadataBlockDataPadding.create(source, metadataBlockHeader.length)
-                }
-
-                metadataBlockHeader.blockType == BlockType.Application -> {
-                    MetadataBlockDataApplication.create(source, metadataBlockHeader.length)
-                }
-
-                metadataBlockHeader.blockType == BlockType.Seektable -> {
-                    MetadataBlockDataSeektable.create(source, metadataBlockHeader.length)
-                }
-
-                metadataBlockHeader.blockType == BlockType.VorbisComment &&
-                    rwStrategy.canReadMetadata() -> {
-                    MetadataBlockDataVorbisComment.create(source).also {
-                        it.userComments.forEach { userComment ->
-                            val parts = userComment.split('=', limit = 2)
-                            if (parts.size == 2) {
-                                val rawField = parts[0].trim()
-                                val value = parts[1].trim()
-                                val normalizedField = rawField.uppercase()
-
-                                metadataList.add(Metadata(normalizedField, value))
-                            }
+                val metadataBlockData: MetadataBlockData = when {
+                    metadataBlockHeader.blockType == BlockType.Streaminfo -> {
+                        MetadataBlockDataStreaminfo.create(source).also {
+                            audioProperties = AudioProperties(
+                                sampleRate = it.sampleRate,
+                                channelCount = it.channelCount,
+                                bits = it.bits,
+                                sampleCount = it.sampleCount
+                            )
                         }
+                    }
 
-                        val map = metadataList
-                            .groupBy { metadataKeyValue -> metadataKeyValue.key }
-                            .mapValues { (_, group) ->
-                                group.map { metadataKeyValue -> metadataKeyValue.value }
+                    metadataBlockHeader.blockType == BlockType.Padding -> {
+                        MetadataBlockDataPadding.create(source, metadataBlockHeader.length)
+                    }
+
+                    metadataBlockHeader.blockType == BlockType.Application -> {
+                        MetadataBlockDataApplication.create(source, metadataBlockHeader.length)
+                    }
+
+                    metadataBlockHeader.blockType == BlockType.Seektable -> {
+                        MetadataBlockDataSeektable.create(source, metadataBlockHeader.length)
+                    }
+
+                    metadataBlockHeader.blockType == BlockType.VorbisComment &&
+                        rwStrategy.canReadMetadata() -> {
+                        MetadataBlockDataVorbisComment.create(source).also {
+                            it.userComments.forEach { userComment ->
+                                val parts = userComment.split('=', limit = 2)
+                                if (parts.size == 2) {
+                                    val rawField = parts[0].trim()
+                                    val value = parts[1].trim()
+                                    val normalizedField = rawField.uppercase()
+
+                                    metadataList.add(Metadata(normalizedField, value))
+                                }
                             }
-                        metadataGroupMap.putAll(map)
+
+                            val map = metadataList
+                                .groupBy { metadataKeyValue -> metadataKeyValue.key }
+                                .mapValues { (_, group) ->
+                                    group.map { metadataKeyValue -> metadataKeyValue.value }
+                                }
+                            metadataGroupMap.putAll(map)
+                        }
                     }
-                }
 
-                metadataBlockHeader.blockType == BlockType.Cuesheet -> {
-                    MetadataBlockDataCuesheet.create(source, metadataBlockHeader.length)
-                }
-
-                metadataBlockHeader.blockType == BlockType.Picture &&
-                    rwStrategy.canReadLazyMetadata() -> {
-                    MetadataBlockDataPicture.create(source).also {
-                        audioPictures.add(it.toAudioPicture())
+                    metadataBlockHeader.blockType == BlockType.Cuesheet -> {
+                        MetadataBlockDataCuesheet.create(source, metadataBlockHeader.length)
                     }
+
+                    metadataBlockHeader.blockType == BlockType.Picture &&
+                        rwStrategy.canReadLazyMetadata() -> {
+                        MetadataBlockDataPicture.create(source).also {
+                            audioPictures.add(it.toAudioPicture())
+                        }
+                    }
+
+                    else -> error(
+                        "Unsupported metadata block type: ${metadataBlockHeader.blockType}."
+                    )
                 }
 
-                else -> error("Unsupported metadata block type: ${metadataBlockHeader.blockType}.")
-            }
-
-            metadataBlocks.add(
-                MetadataBlock(
-                    header = metadataBlockHeader,
-                    data = metadataBlockData
+                metadataBlocks.add(
+                    MetadataBlock(
+                        header = metadataBlockHeader,
+                        data = metadataBlockData
+                    )
                 )
-            )
-        } while (!metadataBlockHeader.isLastMetadataBlock)
+            } while (!metadataBlockHeader.isLastMetadataBlock)
+        }
     }
 
     companion object {

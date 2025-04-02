@@ -58,7 +58,11 @@ abstract class AudioFile {
     abstract fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T>
 
     @UnstableSaltAudioTagApi
-    abstract fun write(input: Source, output: Sink, vararg operation: WriteOperation)
+    abstract fun write(
+        input: () -> Source,
+        output: () -> Sink,
+        vararg operation: WriteOperation
+    )
 
     /**
      * First value from [getMetadataValues] for [key], or `null` if empty.
@@ -73,8 +77,8 @@ abstract class AudioFile {
     @OptIn(UnstableSaltAudioTagApi::class)
     fun write(input: Path, output: Path, vararg operation: WriteOperation) {
         write(
-            input = SystemFileSystem.source(input).buffered(),
-            output = SystemFileSystem.sink(output).buffered(),
+            input = { SystemFileSystem.source(input).buffered() },
+            output = { SystemFileSystem.sink(output).buffered() },
             *operation
         )
     }
