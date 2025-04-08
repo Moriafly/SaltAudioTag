@@ -17,9 +17,9 @@
 
 @file:Suppress("unused")
 
-package com.moriafly.salt.audiotag.rw
+package com.moriafly.salt.audiotag.rw.data
 
-data class AudioPicture(
+data class Picture(
     val pictureType: PictureType,
     val mediaType: String,
     val description: String,
@@ -144,7 +144,7 @@ data class AudioPicture(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as AudioPicture
+        other as Picture
 
         if (pictureType != other.pictureType) return false
         if (mediaType != other.mediaType) return false

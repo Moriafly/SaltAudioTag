@@ -23,7 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.AudioFile
-import com.moriafly.salt.audiotag.rw.Metadata
+import com.moriafly.salt.audiotag.rw.data.Metadata
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension

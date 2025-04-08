@@ -19,11 +19,11 @@ package com.moriafly.salt.audiotag.test.format
 
 import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
-import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
-import com.moriafly.salt.audiotag.rw.Metadata
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
+import com.moriafly.salt.audiotag.rw.data.Metadata
+import com.moriafly.salt.audiotag.rw.data.Picture
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -43,23 +43,23 @@ class FlacTest {
             println("${metadataKeyValue.key}=${metadataKeyValue.value}")
         }
 
-        val audioPicture = audioFile.getLazyMetadataFirst(
-            LazyMetadataKey.Picture(AudioPicture.PictureType.BackCover)
+        val picture = audioFile.getLazyMetadataFirst(
+            LazyMetadataKey.Picture(Picture.PictureType.BackCover)
         )
-        if (audioPicture != null) {
+        if (picture != null) {
             val sinkPath = Path("C:\\Users\\moria\\Desktop\\frontCover.jpg")
             val sink = SystemFileSystem.sink(sinkPath).buffered()
             println(
                 """
-                mediaType = ${audioPicture.mediaType}
-                description = ${audioPicture.description}
-                wh = ${audioPicture.width}x${audioPicture.height}
-                colorDepth = ${audioPicture.colorDepth}bpp
-                colorsNumber = ${audioPicture.colorsNumber}
-                pictureData.size = ${audioPicture.pictureData.size}
+                mediaType = ${picture.mediaType}
+                description = ${picture.description}
+                wh = ${picture.width}x${picture.height}
+                colorDepth = ${picture.colorDepth}bpp
+                colorsNumber = ${picture.colorsNumber}
+                pictureData.size = ${picture.pictureData.size}
                 """.trimIndent()
             )
-            sink.write(audioPicture.pictureData)
+            sink.write(picture.pictureData)
         }
     }
 
@@ -88,7 +88,7 @@ class FlacTest {
             input = path,
             output = outputPath,
             WriteOperation.AllMetadata(
-                metadataList = allMetadata + Metadata(
+                metadatas = allMetadata + Metadata(
                     key = "ARTIST",
                     value = "Salt Audio Tag"
                 )
@@ -108,7 +108,7 @@ class FlacTest {
             input = path,
             output = outputPath,
             WriteOperation.AllMetadata(
-                metadataList = emptyList()
+                metadatas = emptyList()
             )
         )
     }

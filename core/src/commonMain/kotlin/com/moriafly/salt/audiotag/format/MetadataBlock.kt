@@ -24,8 +24,8 @@
 
 package com.moriafly.salt.audiotag.format
 
-import com.moriafly.salt.audiotag.rw.AudioPicture
 import com.moriafly.salt.audiotag.rw.CanWrite
+import com.moriafly.salt.audiotag.rw.data.Picture
 import com.moriafly.salt.audiotag.util.writeInt24
 import kotlinx.io.Buffer
 import kotlinx.io.Source
@@ -433,30 +433,30 @@ internal data class MetadataBlockDataPicture(
         }
         .readByteString()
 
-    fun toAudioPicture(): AudioPicture = AudioPicture(
+    fun toPicture(): Picture = Picture(
         pictureType = when (pictureType) {
-            0 -> AudioPicture.PictureType.Other
-            1 -> AudioPicture.PictureType.PngFileIcon32x32
-            2 -> AudioPicture.PictureType.GeneralFileIcon
-            3 -> AudioPicture.PictureType.FrontCover
-            4 -> AudioPicture.PictureType.BackCover
-            5 -> AudioPicture.PictureType.LinerNotesPage
-            6 -> AudioPicture.PictureType.MediaLabel
-            7 -> AudioPicture.PictureType.Lead
-            8 -> AudioPicture.PictureType.Artist
-            9 -> AudioPicture.PictureType.Conductor
-            10 -> AudioPicture.PictureType.Band
-            11 -> AudioPicture.PictureType.Composer
-            12 -> AudioPicture.PictureType.Lyricist
-            13 -> AudioPicture.PictureType.RecordingLocation
-            14 -> AudioPicture.PictureType.DuringRecording
-            15 -> AudioPicture.PictureType.DuringPerformance
-            16 -> AudioPicture.PictureType.MovieScreenCapture
-            17 -> AudioPicture.PictureType.BrightColoredFish
-            18 -> AudioPicture.PictureType.Illustration
-            19 -> AudioPicture.PictureType.BandLogo
-            20 -> AudioPicture.PictureType.PublisherLogotype
-            else -> AudioPicture.PictureType.Unknown
+            0 -> Picture.PictureType.Other
+            1 -> Picture.PictureType.PngFileIcon32x32
+            2 -> Picture.PictureType.GeneralFileIcon
+            3 -> Picture.PictureType.FrontCover
+            4 -> Picture.PictureType.BackCover
+            5 -> Picture.PictureType.LinerNotesPage
+            6 -> Picture.PictureType.MediaLabel
+            7 -> Picture.PictureType.Lead
+            8 -> Picture.PictureType.Artist
+            9 -> Picture.PictureType.Conductor
+            10 -> Picture.PictureType.Band
+            11 -> Picture.PictureType.Composer
+            12 -> Picture.PictureType.Lyricist
+            13 -> Picture.PictureType.RecordingLocation
+            14 -> Picture.PictureType.DuringRecording
+            15 -> Picture.PictureType.DuringPerformance
+            16 -> Picture.PictureType.MovieScreenCapture
+            17 -> Picture.PictureType.BrightColoredFish
+            18 -> Picture.PictureType.Illustration
+            19 -> Picture.PictureType.BandLogo
+            20 -> Picture.PictureType.PublisherLogotype
+            else -> Picture.PictureType.Unknown
         },
         mediaType = mediaType,
         description = description,

@@ -15,14 +15,14 @@
  * 02110-1301 USA
  */
 
-@file:Suppress("unused")
-
 package com.moriafly.salt.audiotag.rw
 
-import com.moriafly.salt.audiotag.rw.data.Picture
+import com.moriafly.salt.audiotag.rw.data.AudioTag
+import kotlinx.io.Source
 
-sealed class LazyMetadataKey<T> {
-    data class Picture(
-        val pictureType: com.moriafly.salt.audiotag.rw.AudioPicture.Picture.PictureType
-    ) : LazyMetadataKey<com.moriafly.salt.audiotag.rw.data.Picture>()
+interface Reader {
+    fun read(
+        source: Source,
+        strategy: ReadStrategy
+    ): AudioTag
 }

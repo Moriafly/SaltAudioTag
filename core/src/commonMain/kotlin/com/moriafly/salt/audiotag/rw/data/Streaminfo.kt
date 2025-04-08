@@ -15,14 +15,14 @@
  * 02110-1301 USA
  */
 
-@file:Suppress("unused")
+package com.moriafly.salt.audiotag.rw.data
 
-package com.moriafly.salt.audiotag.rw
-
-import com.moriafly.salt.audiotag.rw.data.Picture
-
-sealed class LazyMetadataKey<T> {
-    data class Picture(
-        val pictureType: com.moriafly.salt.audiotag.rw.AudioPicture.Picture.PictureType
-    ) : LazyMetadataKey<com.moriafly.salt.audiotag.rw.data.Picture>()
-}
+/**
+ * @author Moriafly
+ */
+data class Streaminfo(
+    val sampleRate: Int,
+    val channelCount: Int,
+    val bits: Int,
+    val sampleCount: Long
+)

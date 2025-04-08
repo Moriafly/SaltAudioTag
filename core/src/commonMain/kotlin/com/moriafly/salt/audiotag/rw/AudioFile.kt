@@ -20,6 +20,8 @@
 package com.moriafly.salt.audiotag.rw
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import com.moriafly.salt.audiotag.rw.data.Streaminfo
+import com.moriafly.salt.audiotag.rw.data.Metadata
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
@@ -40,7 +42,7 @@ abstract class AudioFile {
     /**
      * Returns detected audio properties or `null` if unavailable.
      */
-    abstract fun getAudioProperties(): AudioProperties?
+    abstract fun getAudioProperties(): Streaminfo?
 
     /**
      * Returns all pre-loaded metadata values for [key], empty list if none exist.

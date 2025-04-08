@@ -15,33 +15,39 @@
  * 02110-1301 USA
  */
 
-@file:Suppress("unused")
-
 package com.moriafly.salt.audiotag.rw
 
-@Suppress("SpellCheckingInspection")
-data class Metadata(
-    val key: String,
-    val value: String
+/**
+ * The strategy for reading audio files.
+ *
+ * @property streaminfo Whether to read the streaminfo block.
+ * @property metadatas Whether to read the metadata block.
+ * @property pictures Whether to read the picture block.
+ *
+ * @author Moriafly
+ */
+data class ReadStrategy(
+    val streaminfo: Boolean,
+    val metadatas: Boolean,
+    val pictures: Boolean
 ) {
-    fun toFlacUserComment(): String = "$key=$value"
-
     companion object {
-        const val TITLE = "TITLE"
-        const val VERSION = "VERSION"
-        const val ALBUM = "ALBUM"
-        const val TRACKNUMBER = "TRACKNUMBER"
-        const val ARTIST = "ARTIST"
-        const val PERFORMER = "PERFORMER"
-        const val COPYRIGHT = "COPYRIGHT"
-        const val LICENSE = "LICENSE"
-        const val ORGANIZATION = "ORGANIZATION"
-        const val DESCRIPTION = "DESCRIPTION"
-        const val GENRE = "GENRE"
-        const val DATE = "DATE"
-        const val LOCATION = "LOCATION"
-        const val CONTACT = "CONTACT"
-        const val ISRC = "ISRC"
-        const val LYRICS = "LYRICS"
+        val IgnorePicture = ReadStrategy(
+            streaminfo = true,
+            metadatas = true,
+            pictures = false
+        )
+
+        val OnlyPicture = ReadStrategy(
+            streaminfo = false,
+            metadatas = false,
+            pictures = true
+        )
+
+        val All = ReadStrategy(
+            streaminfo = true,
+            metadatas = true,
+            pictures = true
+        )
     }
 }

@@ -22,12 +22,12 @@ package com.moriafly.salt.audiotag.format
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.io.ModuleFileSystem
 import com.moriafly.salt.audiotag.rw.AudioFile
-import com.moriafly.salt.audiotag.rw.AudioPicture
-import com.moriafly.salt.audiotag.rw.AudioProperties
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey
-import com.moriafly.salt.audiotag.rw.Metadata
 import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
+import com.moriafly.salt.audiotag.rw.data.Metadata
+import com.moriafly.salt.audiotag.rw.data.Picture
+import com.moriafly.salt.audiotag.rw.data.Streaminfo
 import com.mroiafly.salt.audiotag.BuildKonfig
 import kotlinx.io.Sink
 import kotlinx.io.Source
@@ -49,10 +49,10 @@ class FlacAudioFile(
 ) : AudioFile() {
     private val metadataList = mutableListOf<Metadata>()
     private val metadataGroupMap = mutableMapOf<String, List<String>>()
-    private val audioPictures = mutableListOf<AudioPicture>()
+    private val pictures = mutableListOf<Picture>()
     private val metadataBlocks = mutableListOf<MetadataBlock>()
 
-    private var audioProperties: AudioProperties? = null
+    private var streaminfo: Streaminfo? = null
 
     private fun getWriteMetadataBlockDataList(
         operation: WriteOperation.AllMetadata?
@@ -63,7 +63,7 @@ class FlacAudioFile(
             return writeMetadataBlockDataList
         }
 
-        val metadataList = operation.metadataList
+        val metadataList = operation.metadatas
 
         val vorbisCommentIndex = writeMetadataBlockDataList.indexOfFirst {
             it is MetadataBlockDataVorbisComment
@@ -110,7 +110,7 @@ class FlacAudioFile(
         } while (!metadataBlockHeader.isLastMetadataBlock)
     }
 
-    override fun getAudioProperties(): AudioProperties? = audioProperties
+    override fun getAudioProperties(): Streaminfo? = streaminfo
 
     override fun getMetadataValues(key: String): List<String> = metadataGroupMap[key] ?: emptyList()
 
@@ -119,7 +119,7 @@ class FlacAudioFile(
     override fun <T> getLazyMetadata(key: LazyMetadataKey<T>): List<T> = when (key) {
         is LazyMetadataKey.Picture -> {
             @Suppress("UNCHECKED_CAST")
-            audioPictures
+            pictures
                 .filter { it.pictureType == key.pictureType }
                 .toList() as List<T>
         }
@@ -189,7 +189,7 @@ class FlacAudioFile(
                 val metadataBlockData: MetadataBlockData = when {
                     metadataBlockHeader.blockType == BlockType.Streaminfo -> {
                         MetadataBlockDataStreaminfo.create(source).also {
-                            audioProperties = AudioProperties(
+                            streaminfo = Streaminfo(
                                 sampleRate = it.sampleRate,
                                 channelCount = it.channelCount,
                                 bits = it.bits,
@@ -240,7 +240,7 @@ class FlacAudioFile(
                     metadataBlockHeader.blockType == BlockType.Picture &&
                         rwStrategy.canReadLazyMetadata() -> {
                         MetadataBlockDataPicture.create(source).also {
-                            audioPictures.add(it.toAudioPicture())
+                            pictures.add(it.toPicture())
                         }
                     }
 

@@ -15,14 +15,21 @@
  * 02110-1301 USA
  */
 
-package com.moriafly.salt.audiotag.rw
+package com.moriafly.salt.audiotag.rw.data
+
+import com.moriafly.salt.audiotag.rw.ReadStrategy
 
 /**
- * @author Moriafly
+ * The audio tag.
+ *
+ * @property streaminfo The streaminfo, null if error or [ReadStrategy.streaminfo] is false.
+ * @property metadatas The metadata, null if error or [ReadStrategy.metadatas] is false.
+ * @property pictures The picture, null if error or [ReadStrategy.pictures] is false.
+ *
+ * @see com.moriafly.salt.audiotag.SaltAudioTag.read
  */
-data class AudioProperties(
-    val sampleRate: Int,
-    val channelCount: Int,
-    val bits: Int,
-    val sampleCount: Long
+data class AudioTag(
+    val streaminfo: Streaminfo?,
+    val metadatas: List<Metadata>?,
+    val pictures: List<Picture>?
 )

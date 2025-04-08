@@ -20,10 +20,11 @@
 package com.moriafly.salt.audiotag.rw
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import com.moriafly.salt.audiotag.rw.data.Metadata
 
 @UnstableSaltAudioTagApi
 sealed class WriteOperation {
     data class AllMetadata(
-        val metadataList: List<Metadata>
+        val metadatas: List<Metadata>
     ) : WriteOperation()
 }
