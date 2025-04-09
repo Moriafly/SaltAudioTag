@@ -38,7 +38,6 @@ class Writer {
 
         try {
             SystemFileSystem.source(source).buffered().use { source ->
-                SystemFileSystem.atomicMove()
             }
         } finally {
             SystemFileSystem.delete(tempFilePath)

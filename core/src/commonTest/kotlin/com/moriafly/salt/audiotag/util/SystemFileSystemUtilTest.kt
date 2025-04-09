@@ -15,33 +15,25 @@
  * 02110-1301 USA
  */
 
-package com.moriafly.salt.audiotag.rw
+package com.moriafly.salt.audiotag.util
 
+import com.moriafly.salt.audiotag.rw.Writer
 import kotlinx.io.buffered
+import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.writeString
 import kotlin.test.Test
 
-class WriterTest {
+class SystemFileSystemUtilTest {
     @Test
-    fun tempDirectory() {
-        // Windows: C:\Users\moria\AppData\Local\Temp
-        // Android: /data/user/0/com.moriafly.salt.audiotag/cache
-        println("SystemTemporaryDirectory = $SystemTemporaryDirectory")
-    }
-
-    @Test
-    fun tempFilePath() {
-        println("TempFilePath = ${Writer.tempFilePath()}")
-    }
-
-    @Test
-    fun writeTempFilePath() {
+    fun copy() {
         val tempFilePath = Writer.tempFilePath()
         SystemFileSystem.sink(tempFilePath).buffered().use {
             it.writeString("Hello, Salt Audio Tag!")
         }
-        println("TempFilePath = $tempFilePath")
+        SystemFileSystemUtil.copy(
+            src = tempFilePath,
+            dst = Path("C:\\Users\\moria\\1")
+        )
     }
 }
