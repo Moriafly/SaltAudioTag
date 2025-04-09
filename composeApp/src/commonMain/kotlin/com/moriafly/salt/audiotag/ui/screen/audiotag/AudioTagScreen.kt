@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -40,8 +39,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -239,9 +240,10 @@ private fun MetadataItem(
             .fillMaxWidth()
             .padding(
                 horizontal = SaltTheme.dimens.padding,
-                vertical = 2.dp
+                vertical = 4.dp
             )
-            .border(Dp.Hairline, SaltTheme.colors.subText, RoundedCornerShape(2.dp))
+            .border(Dp.Hairline, SaltTheme.colors.subText, SaltTheme.shapes.small)
+            .clip(SaltTheme.shapes.small)
     ) {
         BasicTextField(
             state = item.key,
@@ -249,7 +251,8 @@ private fun MetadataItem(
                 .fillMaxWidth()
                 .background(SaltTheme.colors.stroke),
             textStyle = SaltTheme.textStyles.main.copy(
-                color = SaltTheme.colors.text
+                color = SaltTheme.colors.text,
+                fontWeight = FontWeight.Bold
             ),
             cursorBrush = SolidColor(SaltTheme.colors.text),
             decorator = { innerTextField ->
@@ -257,8 +260,8 @@ private fun MetadataItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = 4.dp,
-                            vertical = 2.dp
+                            horizontal = 8.dp,
+                            vertical = 4.dp
                         )
                 ) {
                     innerTextField()
@@ -278,8 +281,8 @@ private fun MetadataItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = 4.dp,
-                            vertical = 2.dp
+                            horizontal = 8.dp,
+                            vertical = 4.dp
                         )
                 ) {
                     innerTextField()
