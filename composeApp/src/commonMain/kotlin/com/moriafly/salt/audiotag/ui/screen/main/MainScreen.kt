@@ -37,7 +37,7 @@ fun MainScreen() {
     ) {
         ItemOuterLargeTitle(
             text = "椒盐音频标签",
-            sub = "版本"
+            sub = "版本 0.1.0-dev01"
         )
 
         RoundedColumn {
