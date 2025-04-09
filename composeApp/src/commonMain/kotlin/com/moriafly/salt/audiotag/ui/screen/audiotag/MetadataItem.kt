@@ -17,6 +17,7 @@
 
 package com.moriafly.salt.audiotag.ui.screen.audiotag
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -42,13 +44,23 @@ import com.moriafly.salt.audiotag.ui.icon.More
 import com.moriafly.salt.audiotag.ui.icon.SaltAudioTagIcons
 import com.moriafly.salt.ui.Icon
 import com.moriafly.salt.ui.SaltTheme
+import com.moriafly.salt.ui.noRippleClickable
+import com.moriafly.salt.ui.popup.rememberPopupState
 
 @Composable
 fun MetadataItem(
+    onDelete: () -> Unit,
     item: AudioTagUiState.MetadataItemUiState
 ) {
+    val state = rememberPopupState()
+    val color = if (state.expend) {
+        SaltTheme.colors.stroke
+    } else {
+        Color.Unspecified
+    }
     Row(
         modifier = Modifier
+            .background(color)
             .padding(
                 horizontal = SaltTheme.dimens.padding
             ),
@@ -60,14 +72,24 @@ fun MetadataItem(
             modifier = Modifier
                 .weight(1f)
         )
-        Icon(
-            painter = rememberVectorPainter(SaltAudioTagIcons.More),
-            contentDescription = null,
-            modifier = Modifier
-                .size(SaltTheme.dimens.itemIcon)
-                .padding(3.5f.dp),
-            tint = SaltTheme.colors.text.copy(alpha = 0.75f)
-        )
+        Box {
+            Icon(
+                painter = rememberVectorPainter(SaltAudioTagIcons.More),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(SaltTheme.dimens.itemIcon)
+                    .noRippleClickable {
+                        state.expend()
+                    }
+                    .padding(4.dp),
+                tint = SaltTheme.colors.text.copy(alpha = 0.75f)
+            )
+
+            MetadataItemPopup(
+                onDelete = onDelete,
+                state = state
+            )
+        }
     }
 }
 

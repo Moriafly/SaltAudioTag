@@ -140,6 +140,9 @@ private fun ColumnScope.AudioTagScreenContent(
                                     )
                                 }
                                 MetadataItem(
+                                    onDelete = {
+                                        viewModel.removeMetadata(index)
+                                    },
                                     item = item
                                 )
                             }

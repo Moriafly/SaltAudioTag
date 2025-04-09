@@ -170,4 +170,15 @@ class AudioTagViewModel : ViewModel() {
             )
         }
     }
+
+    fun removeMetadata(index: Int) {
+        _uiState.update {
+            it.copy(
+                metadataItemUiStates =
+                    it.metadataItemUiStates.toMutableList().apply {
+                        removeAt(index)
+                    }
+            )
+        }
+    }
 }
