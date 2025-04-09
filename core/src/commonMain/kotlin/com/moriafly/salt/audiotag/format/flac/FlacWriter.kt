@@ -20,7 +20,6 @@ package com.moriafly.salt.audiotag.format.flac
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.Writer
-import com.moriafly.salt.audiotag.rw.Writer.Companion.tempFilePath
 import com.moriafly.salt.audiotag.util.SystemFileSystemUtil
 import com.mroiafly.salt.audiotag.BuildKonfig
 import kotlinx.io.buffered
@@ -80,7 +79,7 @@ class FlacWriter : Writer {
 
     @UnstableSaltAudioTagApi
     override fun write(src: Path, dst: Path, vararg operation: WriteOperation) {
-        val tempFilePath = tempFilePath()
+        val tempFilePath = SystemFileSystemUtil.tempFilePath()
         try {
             SystemFileSystemUtil.copy(src, tempFilePath)
 

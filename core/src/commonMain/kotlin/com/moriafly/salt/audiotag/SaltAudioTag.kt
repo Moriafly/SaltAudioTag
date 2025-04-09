@@ -17,18 +17,13 @@
 
 package com.moriafly.salt.audiotag
 
-import com.moriafly.salt.audiotag.format.FlacAudioFile
 import com.moriafly.salt.audiotag.format.flac.FlacReader
-import com.moriafly.salt.audiotag.rw.AudioFile
+import com.moriafly.salt.audiotag.format.flac.FlacWriter
 import com.moriafly.salt.audiotag.rw.ReadStrategy
-import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.data.AudioTag
-import com.moriafly.salt.audiotag.util.extension
 import kotlinx.io.Source
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 
 /**
  * Salt Audio Tag
@@ -36,26 +31,6 @@ import kotlinx.io.files.SystemFileSystem
  * @author Moriafly
  */
 object SaltAudioTag {
-    @UnstableSaltAudioTagApi
-    fun create(
-        path: Path,
-        rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
-    ): AudioFile = create(
-        source = SystemFileSystem.source(path).buffered(),
-        extension = path.extension,
-        rwStrategy = rwStrategy
-    )
-
-    @UnstableSaltAudioTagApi
-    fun create(
-        source: Source,
-        extension: String,
-        rwStrategy: RwStrategy = RwStrategy.ReadWriteAll
-    ): AudioFile = when (extension) {
-        "flac" -> FlacAudioFile(source, rwStrategy)
-        else -> throw UnsupportedOperationException("Unsupported file format.")
-    }
-
     /**
      * Read audio file.
      *
@@ -82,18 +57,28 @@ object SaltAudioTag {
     ): Result<AudioTag> = runCatching {
         when (extension) {
             "flac" -> FlacReader().read(source, strategy)
-            else -> throw UnsupportedOperationException("Unsupported file format.")
+            else -> throw UnsupportedOperationException("Unsupported file format")
         }
     }
 
     /**
      * Write audio file.
+     *
+     * @param src Source file path.
+     * @param dst Destination file path.
+     * @param extension Extension of the audio file, such as "flac".
+     * @param operation Write operations.
      */
     @UnstableSaltAudioTagApi
     fun write(
         src: Path,
         dst: Path,
+        extension: String,
         vararg operation: WriteOperation
     ): Result<Unit> = runCatching {
+        when (extension) {
+            "flac" -> FlacWriter().write(src, dst, *operation)
+            else -> throw UnsupportedOperationException("Unsupported file format")
+        }
     }
 }

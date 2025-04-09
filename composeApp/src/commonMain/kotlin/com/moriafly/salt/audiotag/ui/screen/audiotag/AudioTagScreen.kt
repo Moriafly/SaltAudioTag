@@ -23,17 +23,22 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -49,6 +54,7 @@ import com.moriafly.salt.ui.ItemInfo
 import com.moriafly.salt.ui.ItemInfoType
 import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.SaltTheme
+import com.moriafly.salt.ui.Text
 import com.moriafly.salt.ui.UnstableSaltUiApi
 import com.moriafly.salt.ui.icons.SaltIcons
 import com.moriafly.salt.ui.icons.Success
@@ -116,8 +122,7 @@ private fun ColumnScope.AudioTagScreenContent(
                 )
             }
 
-            AudioTagUiState.State.Loading -> {
-            }
+            AudioTagUiState.State.Loading -> LoadingContent()
 
             AudioTagUiState.State.Loaded -> {
                 LazyColumn(
@@ -133,8 +138,7 @@ private fun ColumnScope.AudioTagScreenContent(
                 }
             }
 
-            AudioTagUiState.State.Saving -> {
-            }
+            AudioTagUiState.State.Saving -> SavingContent()
 
             AudioTagUiState.State.Error -> {
                 RoundedColumn {
@@ -173,6 +177,54 @@ private fun IdleContent(
                     onPickFile()
                 },
                 text = "选择音频文件"
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadingContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(SaltTheme.dimens.itemIcon),
+                color = SaltTheme.colors.highlight,
+                strokeWidth = 2.dp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = "读取中……"
+            )
+        }
+    }
+}
+
+@Composable
+private fun SavingContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(SaltTheme.dimens.itemIcon),
+                color = SaltTheme.colors.highlight,
+                strokeWidth = 2.dp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = "保存中……"
             )
         }
     }

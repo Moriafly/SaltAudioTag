@@ -20,17 +20,36 @@
 package com.moriafly.salt.audiotag.util
 
 import kotlinx.io.IOException
+import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.FileNotFoundException
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * System file system utilities.
  *
  * @author Moriafly
  */
-internal object SystemFileSystemUtil {
+object SystemFileSystemUtil {
+    /**
+     * Create a temporary file path.
+     *
+     * Example:
+     *
+     * - C:\Users\moria\AppData\Local\Temp\06be772dd5dc49b3af958f698d908c81
+     * - /data/user/0/com.moriafly.salt.audiotag/cache/06be772dd5dc49b3af958f698d908c81
+     */
+    @OptIn(ExperimentalUuidApi::class)
+    fun tempFilePath(): Path {
+        // 32 chars.
+        val fileName = Uuid.random().toHexString()
+        return Path(SystemTemporaryDirectory, fileName)
+    }
+
     /**
      * Copy regular file [src] to [dst].
      *
@@ -52,6 +71,15 @@ internal object SystemFileSystemUtil {
             SystemFileSystem.sink(dst).buffered().use { sink ->
                 sink.write(source, metadata.size)
             }
+        }
+    }
+
+    /**
+     * Write [source] to [dst].
+     */
+    fun write(source: Source, dst: Path) {
+        SystemFileSystem.sink(dst).buffered().use { sink ->
+            sink.transferFrom(source)
         }
     }
 }

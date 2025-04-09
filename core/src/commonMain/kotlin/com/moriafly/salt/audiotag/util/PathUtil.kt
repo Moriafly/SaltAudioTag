@@ -15,6 +15,8 @@
  * 02110-1301 USA
  */
 
+@file:Suppress("unused")
+
 package com.moriafly.salt.audiotag.util
 
 import kotlinx.io.files.Path

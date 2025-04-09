@@ -22,9 +22,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
-import com.moriafly.salt.audiotag.rw.AudioFile
-import com.moriafly.salt.audiotag.rw.data.Metadata
+import com.moriafly.salt.audiotag.rw.ReadStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
+import com.moriafly.salt.audiotag.rw.data.Metadata
+import com.moriafly.salt.audiotag.util.SystemFileSystemUtil
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.sink
@@ -40,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.buffered
+import kotlinx.io.files.SystemFileSystem
 
 class AudioTagViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AudioTagUiState())
@@ -54,7 +56,6 @@ class AudioTagViewModel : ViewModel() {
     private val mutex = Mutex()
 
     private var platformFile: PlatformFile? = null
-    private var audioFile: AudioFile? = null
 
     private var loadJob: Job? = null
     private var saveJob: Job? = null
@@ -69,17 +70,21 @@ class AudioTagViewModel : ViewModel() {
                 this@AudioTagViewModel.platformFile = platformFile
 
                 try {
-                    val audioFile = SaltAudioTag.create(
-                        source = platformFile.source().buffered(),
-                        extension = platformFile.extension
-                    ).also {
-                        this@AudioTagViewModel.audioFile = it
+                    val audioTagResult = platformFile.source().buffered().use { source ->
+                        SaltAudioTag.read(
+                            source = source,
+                            extension = platformFile.extension,
+                            strategy = ReadStrategy.All
+                        )
                     }
 
-                    val allMetadata = audioFile.getAllMetadata()
+                    val audioTag = audioTagResult.getOrThrow()
+
+                    val metadatas = audioTag.metadatas ?: emptyList()
+
                     _uiState.update {
                         it.copy(
-                            metadataItemUiStates = allMetadata.map { metadata ->
+                            metadataItemUiStates = metadatas.map { metadata ->
                                 AudioTagUiState.MetadataItemUiState(
                                     key = TextFieldState(metadata.key),
                                     value = TextFieldState(metadata.value)
@@ -109,29 +114,49 @@ class AudioTagViewModel : ViewModel() {
                 _uiState.update { it.copy(state = AudioTagUiState.State.Saving) }
 
                 val platformFile = this@AudioTagViewModel.platformFile
-                val audioFile = this@AudioTagViewModel.audioFile
 
-                if (platformFile == null || audioFile == null) {
+                if (platformFile == null) {
                     _saveResult.emit(false)
                     return@launch
                 }
 
-                val allMetadata = _uiState.value.metadataItemUiStates.map { metadataItemUiState ->
+                val metadatas = _uiState.value.metadataItemUiStates.map { metadataItemUiState ->
                     Metadata(
                         key = metadataItemUiState.key.text.toString(),
                         value = metadataItemUiState.value.text.toString()
                     )
                 }
 
-                audioFile.write(
-                    input = { platformFile.source().buffered() },
-                    output = { platformFile.sink().buffered() },
-                    WriteOperation.AllMetadata(
-                        allMetadata
-                    )
-                )
+                val src = SystemFileSystemUtil.tempFilePath()
+                val dst = SystemFileSystemUtil.tempFilePath()
+                try {
+                    platformFile.source().buffered().use {
+                        SystemFileSystemUtil.write(it, src)
+                    }
 
-                _saveResult.emit(true)
+                    SaltAudioTag.write(
+                        src = src,
+                        dst = dst,
+                        extension = platformFile.extension,
+                        WriteOperation.AllMetadata(
+                            metadatas
+                        )
+                    )
+
+                    platformFile.sink().buffered().use { sink ->
+                        SystemFileSystem.source(dst).buffered().use { source ->
+                            sink.transferFrom(source)
+                        }
+                    }
+
+                    _saveResult.emit(true)
+                } catch (e: Exception) {
+                    // Save error
+                    _saveResult.emit(false)
+                } finally {
+                    SystemFileSystem.delete(src)
+                    SystemFileSystem.delete(dst)
+                }
             }
         }
     }

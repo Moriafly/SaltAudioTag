@@ -19,9 +19,7 @@ package com.moriafly.salt.audiotag.rw
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 internal interface Writer {
     /**
@@ -32,19 +30,4 @@ internal interface Writer {
     @OptIn(ExperimentalUuidApi::class)
     @UnstableSaltAudioTagApi
     fun write(src: Path, dst: Path, vararg operation: WriteOperation)
-
-    companion object {
-        /**
-         * Example:
-         *
-         * - C:\Users\moria\AppData\Local\Temp\06be772dd5dc49b3af958f698d908c81
-         * - /data/user/0/com.moriafly.salt.audiotag/cache/06be772dd5dc49b3af958f698d908c81
-         */
-        @OptIn(ExperimentalUuidApi::class)
-        fun tempFilePath(): Path {
-            // 32 chars.
-            val fileName = Uuid.random().toHexString()
-            return Path(SystemTemporaryDirectory, fileName)
-        }
-    }
 }
