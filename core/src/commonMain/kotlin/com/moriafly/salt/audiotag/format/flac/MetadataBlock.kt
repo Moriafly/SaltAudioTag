@@ -22,7 +22,7 @@
     "SpellCheckingInspection"
 )
 
-package com.moriafly.salt.audiotag.format
+package com.moriafly.salt.audiotag.format.flac
 
 import com.moriafly.salt.audiotag.rw.CanWrite
 import com.moriafly.salt.audiotag.rw.data.Picture

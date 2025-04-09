@@ -17,12 +17,6 @@
 
 package com.moriafly.salt.audiotag.format.flac
 
-import com.moriafly.salt.audiotag.format.BlockType
-import com.moriafly.salt.audiotag.format.FlacSignature
-import com.moriafly.salt.audiotag.format.MetadataBlockDataPicture
-import com.moriafly.salt.audiotag.format.MetadataBlockDataStreaminfo
-import com.moriafly.salt.audiotag.format.MetadataBlockDataVorbisComment
-import com.moriafly.salt.audiotag.format.MetadataBlockHeader
 import com.moriafly.salt.audiotag.rw.ReadStrategy
 import com.moriafly.salt.audiotag.rw.Reader
 import com.moriafly.salt.audiotag.rw.data.AudioTag
@@ -32,10 +26,7 @@ import com.moriafly.salt.audiotag.rw.data.Streaminfo
 import kotlinx.io.Source
 
 class FlacReader : Reader {
-    override fun read(
-        source: Source,
-        strategy: ReadStrategy
-    ): AudioTag {
+    override fun read(source: Source, strategy: ReadStrategy): AudioTag {
         var streaminfo: Streaminfo? = null
         var metadatas: List<Metadata>? = null
         var pictures: MutableList<Picture>? = null

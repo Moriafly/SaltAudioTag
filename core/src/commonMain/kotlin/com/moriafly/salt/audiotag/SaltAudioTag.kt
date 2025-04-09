@@ -22,6 +22,7 @@ import com.moriafly.salt.audiotag.format.flac.FlacReader
 import com.moriafly.salt.audiotag.rw.AudioFile
 import com.moriafly.salt.audiotag.rw.ReadStrategy
 import com.moriafly.salt.audiotag.rw.RwStrategy
+import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.data.AudioTag
 import com.moriafly.salt.audiotag.util.extension
 import kotlinx.io.Source
@@ -83,5 +84,16 @@ object SaltAudioTag {
             "flac" -> FlacReader().read(source, strategy)
             else -> throw UnsupportedOperationException("Unsupported file format.")
         }
+    }
+
+    /**
+     * Write audio file.
+     */
+    @UnstableSaltAudioTagApi
+    fun write(
+        src: Path,
+        dst: Path,
+        vararg operation: WriteOperation
+    ): Result<Unit> = runCatching {
     }
 }

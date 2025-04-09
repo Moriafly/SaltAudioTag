@@ -21,8 +21,5 @@ import com.moriafly.salt.audiotag.rw.data.AudioTag
 import kotlinx.io.Source
 
 internal interface Reader {
-    fun read(
-        source: Source,
-        strategy: ReadStrategy
-    ): AudioTag
+    fun read(source: Source, strategy: ReadStrategy): AudioTag
 }

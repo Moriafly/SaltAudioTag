@@ -17,32 +17,21 @@
 
 package com.moriafly.salt.audiotag.rw
 
-import kotlinx.io.buffered
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class Writer {
+internal interface Writer {
     /**
-     * @param source The source file path.
-     * @param destination The destination file path.
+     * @param src The source file path.
+     * @param dst The destination file path.
+     * @param operation The operation to perform.
      */
     @OptIn(ExperimentalUuidApi::class)
-    fun write(
-        source: Path,
-        destination: Path
-    ) {
-        val tempFilePath = tempFilePath()
-
-        try {
-            SystemFileSystem.source(source).buffered().use { source ->
-            }
-        } finally {
-            SystemFileSystem.delete(tempFilePath)
-        }
-    }
+    @UnstableSaltAudioTagApi
+    fun write(src: Path, dst: Path, vararg operation: WriteOperation)
 
     companion object {
         /**

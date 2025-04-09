@@ -20,6 +20,18 @@
 package com.moriafly.salt.audiotag.format
 
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+import com.moriafly.salt.audiotag.format.flac.BlockType
+import com.moriafly.salt.audiotag.format.flac.FlacSignature
+import com.moriafly.salt.audiotag.format.flac.MetadataBlock
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockData
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataApplication
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataCuesheet
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataPadding
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataPicture
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataSeektable
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataStreaminfo
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockDataVorbisComment
+import com.moriafly.salt.audiotag.format.flac.MetadataBlockHeader
 import com.moriafly.salt.audiotag.io.ModuleFileSystem
 import com.moriafly.salt.audiotag.rw.AudioFile
 import com.moriafly.salt.audiotag.rw.LazyMetadataKey

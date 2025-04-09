@@ -22,7 +22,7 @@
     "SpellCheckingInspection"
 )
 
-package com.moriafly.salt.audiotag.format
+package com.moriafly.salt.audiotag.format.flac
 
 import kotlinx.io.Source
 import kotlinx.io.bytestring.ByteString
