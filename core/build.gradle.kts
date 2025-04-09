@@ -41,13 +41,14 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
+            // implementation(libs.kotlin.test.junit)
         }
         commonMain.dependencies {
-            implementation(libs.kotlin.test)
-            // implementation(libs.kotlin.test.junit)
-
             implementation(libs.kotlinx.io.core)
             implementation(libs.kotlinx.io.bytestring)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
         }
         desktopMain.dependencies {
             implementation(libs.kotlinx.coroutines.swing)

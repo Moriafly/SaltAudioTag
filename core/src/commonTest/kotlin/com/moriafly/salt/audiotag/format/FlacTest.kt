@@ -15,7 +15,7 @@
  * 02110-1301 USA
  */
 
-package com.moriafly.salt.audiotag.test.format
+package com.moriafly.salt.audiotag.format
 
 import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
@@ -24,9 +24,7 @@ import com.moriafly.salt.audiotag.rw.RwStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.data.Metadata
 import com.moriafly.salt.audiotag.rw.data.Picture
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlin.test.Test
 
 class FlacTest {
@@ -46,21 +44,21 @@ class FlacTest {
         val picture = audioFile.getLazyMetadataFirst(
             LazyMetadataKey.Picture(Picture.PictureType.BackCover)
         )
-        if (picture != null) {
-            val sinkPath = Path("C:\\Users\\moria\\Desktop\\frontCover.jpg")
-            val sink = SystemFileSystem.sink(sinkPath).buffered()
-            println(
-                """
-                mediaType = ${picture.mediaType}
-                description = ${picture.description}
-                wh = ${picture.width}x${picture.height}
-                colorDepth = ${picture.colorDepth}bpp
-                colorsNumber = ${picture.colorsNumber}
-                pictureData.size = ${picture.pictureData.size}
-                """.trimIndent()
-            )
-            sink.write(picture.pictureData)
-        }
+//        if (picture != null) {
+//            val sinkPath = Path("C:\\Users\\moria\\Desktop\\frontCover.jpg")
+//            val sink = SystemFileSystem.sink(sinkPath).buffered()
+//            println(
+//                """
+//                mediaType = ${picture.mediaType}
+//                description = ${picture.description}
+//                wh = ${picture.width}x${picture.height}
+//                colorDepth = ${picture.colorDepth}bpp
+//                colorsNumber = ${picture.colorsNumber}
+//                pictureData.size = ${picture.pictureData.size}
+//                """.trimIndent()
+//            )
+//            sink.write(picture.pictureData)
+//        }
     }
 
     @OptIn(UnstableSaltAudioTagApi::class)

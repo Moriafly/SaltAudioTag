@@ -20,7 +20,7 @@ package com.moriafly.salt.audiotag.rw
 import com.moriafly.salt.audiotag.rw.data.AudioTag
 import kotlinx.io.Source
 
-interface Reader {
+internal interface Reader {
     fun read(
         source: Source,
         strategy: ReadStrategy

@@ -23,6 +23,6 @@ import com.moriafly.salt.audiotag.rw.data.Picture
 
 sealed class LazyMetadataKey<T> {
     data class Picture(
-        val pictureType: com.moriafly.salt.audiotag.rw.AudioPicture.Picture.PictureType
-    ) : LazyMetadataKey<com.moriafly.salt.audiotag.rw.data.Picture>()
+        val pictureType: Picture.PictureType
+    ) : LazyMetadataKey<Picture>()
 }

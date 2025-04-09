@@ -23,8 +23,10 @@ import com.moriafly.salt.audiotag.ui.navigation.ScreenRoute
 import com.moriafly.salt.audiotag.ui.screen.basic.BasicScreenColumn
 import com.moriafly.salt.ui.Item
 import com.moriafly.salt.ui.ItemOuterLargeTitle
+import com.moriafly.salt.ui.ItemValue
 import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.UnstableSaltUiApi
+import kotlinx.io.files.SystemTemporaryDirectory
 
 @OptIn(UnstableSaltUiApi::class)
 @Composable
@@ -37,6 +39,7 @@ fun MainScreen() {
             text = "椒盐音频标签",
             sub = "版本"
         )
+
         RoundedColumn {
             val navController = LocalNavController.current
             Item(
@@ -44,6 +47,13 @@ fun MainScreen() {
                     navController.navigate(ScreenRoute.AUDIO_TAG)
                 },
                 text = "FLAC 元数据读写"
+            )
+        }
+
+        RoundedColumn {
+            ItemValue(
+                text = "TempDir",
+                sub = SystemTemporaryDirectory.toString()
             )
         }
     }
