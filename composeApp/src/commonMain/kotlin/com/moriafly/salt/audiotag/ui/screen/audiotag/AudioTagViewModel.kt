@@ -138,9 +138,7 @@ class AudioTagViewModel : ViewModel() {
                         src = src,
                         dst = dst,
                         extension = platformFile.extension,
-                        WriteOperation.AllMetadata(
-                            metadatas
-                        )
+                        WriteOperation.AllMetadata.create(metadatas)
                     )
 
                     platformFile.sink().buffered().use { sink ->
@@ -158,6 +156,18 @@ class AudioTagViewModel : ViewModel() {
                     SystemFileSystem.delete(dst)
                 }
             }
+        }
+    }
+
+    fun addEmptyMetadata() {
+        _uiState.update {
+            it.copy(
+                metadataItemUiStates =
+                    it.metadataItemUiStates + AudioTagUiState.MetadataItemUiState(
+                        key = TextFieldState(),
+                        value = TextFieldState()
+                    )
+            )
         }
     }
 }

@@ -26,6 +26,22 @@ data class Metadata(
 ) {
     fun toFlacUserComment(): String = "$key=$value"
 
+    fun isValid(): Boolean = key.isNotBlank() && value.isNotBlank()
+
+    /**
+     * Format the metadata.
+     *
+     * @return The formatted metadata, null if the metadata is invalid.
+     */
+    fun format(): Metadata? = if (this.isValid()) {
+        Metadata(
+            key = key.trim(),
+            value = value.trim()
+        )
+    } else {
+        null
+    }
+
     companion object {
         const val TITLE = "TITLE"
         const val VERSION = "VERSION"

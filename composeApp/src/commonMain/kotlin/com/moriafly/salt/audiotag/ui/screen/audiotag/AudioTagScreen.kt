@@ -19,19 +19,17 @@ package com.moriafly.salt.audiotag.ui.screen.audiotag
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,11 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
@@ -51,14 +45,19 @@ import com.moriafly.salt.audiotag.ui.screen.basic.BasicScreenColumn
 import com.moriafly.salt.ui.BottomBar
 import com.moriafly.salt.ui.BottomBarItem
 import com.moriafly.salt.ui.Item
+import com.moriafly.salt.ui.ItemButton
+import com.moriafly.salt.ui.ItemDivider
 import com.moriafly.salt.ui.ItemInfo
 import com.moriafly.salt.ui.ItemInfoType
+import com.moriafly.salt.ui.ItemOuterTitle
 import com.moriafly.salt.ui.RoundedColumn
 import com.moriafly.salt.ui.SaltTheme
 import com.moriafly.salt.ui.Text
 import com.moriafly.salt.ui.UnstableSaltUiApi
+import com.moriafly.salt.ui.ext.safeMainIgnoringVisibility
 import com.moriafly.salt.ui.icons.SaltIcons
 import com.moriafly.salt.ui.icons.Success
+import com.moriafly.salt.ui.util.SystemUtil
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 
@@ -131,10 +130,31 @@ private fun ColumnScope.AudioTagScreenContent(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    items(metadataItems) { item ->
-                        MetadataItem(
-                            item = item
-                        )
+                    item {
+                        ItemOuterTitle(text = "元数据")
+                        RoundedColumn {
+                            metadataItems.forEachIndexed { index, item ->
+                                if (index != 0) {
+                                    ItemDivider(
+                                        color = SaltTheme.colors.subText.copy(alpha = 0.5f)
+                                    )
+                                }
+                                MetadataItem(
+                                    item = item
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        RoundedColumn {
+                            ItemButton(
+                                onClick = {
+                                    viewModel.addEmptyMetadata()
+                                },
+                                text = "添加元数据项"
+                            )
+                        }
                     }
                 }
             }
@@ -160,6 +180,15 @@ private fun ColumnScope.AudioTagScreenContent(
             },
             painter = rememberVectorPainter(SaltIcons.Success),
             text = "保存"
+        )
+    }
+
+    if (SystemUtil.os.isAndroid()) {
+        Spacer(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsBottomHeight(WindowInsets.safeMainIgnoringVisibility)
+                .background(SaltTheme.colors.subBackground)
         )
     }
 }
@@ -228,66 +257,5 @@ private fun SavingContent() {
                 text = "保存中……"
             )
         }
-    }
-}
-
-@Composable
-private fun MetadataItem(
-    item: AudioTagUiState.MetadataItemUiState
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = SaltTheme.dimens.padding,
-                vertical = 4.dp
-            )
-            .border(Dp.Hairline, SaltTheme.colors.subText, SaltTheme.shapes.small)
-            .clip(SaltTheme.shapes.small)
-    ) {
-        BasicTextField(
-            state = item.key,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(SaltTheme.colors.stroke),
-            textStyle = SaltTheme.textStyles.main.copy(
-                color = SaltTheme.colors.text,
-                fontWeight = FontWeight.Bold
-            ),
-            cursorBrush = SolidColor(SaltTheme.colors.text),
-            decorator = { innerTextField ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 8.dp,
-                            vertical = 4.dp
-                        )
-                ) {
-                    innerTextField()
-                }
-            }
-        )
-        BasicTextField(
-            state = item.value,
-            modifier = Modifier
-                .fillMaxWidth(),
-            textStyle = SaltTheme.textStyles.main.copy(
-                color = SaltTheme.colors.text
-            ),
-            cursorBrush = SolidColor(SaltTheme.colors.text),
-            decorator = { innerTextField ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 8.dp,
-                            vertical = 4.dp
-                        )
-                ) {
-                    innerTextField()
-                }
-            }
-        )
     }
 }

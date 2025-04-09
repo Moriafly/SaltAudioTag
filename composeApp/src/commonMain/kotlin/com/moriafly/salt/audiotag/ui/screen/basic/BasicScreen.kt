@@ -19,7 +19,13 @@ package com.moriafly.salt.audiotag.ui.screen.basic
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -27,7 +33,7 @@ import androidx.compose.ui.Modifier
 import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
 import com.moriafly.salt.ui.TitleBar
 import com.moriafly.salt.ui.UnstableSaltUiApi
-import com.moriafly.salt.ui.ext.safeMainIgnoringVisibilityPadding
+import com.moriafly.salt.ui.ext.safeMainIgnoringVisibility
 import com.moriafly.salt.ui.thenIf
 import com.moriafly.salt.ui.util.SystemUtil
 
@@ -42,7 +48,11 @@ fun BasicScreenColumn(
     Column(
         modifier = Modifier
             .thenIf(SystemUtil.os.isAndroid()) {
-                safeMainIgnoringVisibilityPadding()
+                windowInsetsPadding(
+                    WindowInsets.safeMainIgnoringVisibility.only(
+                        WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                    )
+                )
             }
     ) {
         val navController = LocalNavController.current
@@ -58,8 +68,12 @@ fun BasicScreenColumn(
                 .fillMaxSize()
                 .thenIf(autoVerticalScroll) {
                     verticalScroll(rememberScrollState())
-                },
-            content = content
-        )
+                }
+        ) {
+            content()
+            if (SystemUtil.os.isAndroid() && autoVerticalScroll) {
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeMainIgnoringVisibility))
+            }
+        }
     }
 }

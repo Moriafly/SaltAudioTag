@@ -15,23 +15,10 @@
  * 02110-1301 USA
  */
 
-@file:Suppress("unused")
+package com.moriafly.salt.audiotag.util
 
-package com.moriafly.salt.audiotag.rw
-
-import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.data.Metadata
-import com.moriafly.salt.audiotag.util.format
 
-@UnstableSaltAudioTagApi
-sealed class WriteOperation {
-    class AllMetadata private constructor(
-        val metadatas: List<Metadata>
-    ) : WriteOperation() {
-        companion object {
-            fun create(
-                metadatas: List<Metadata>
-            ): AllMetadata = AllMetadata(metadatas.format())
-        }
-    }
+internal fun List<Metadata>.format(): List<Metadata> = this.mapNotNull {
+    it.format()
 }
