@@ -69,7 +69,7 @@ class FlacReader : Reader {
                 BlockType.Picture if strategy.pictures -> {
                     MetadataBlockDataPicture.create(source).also {
                         if (pictures == null) {
-                            pictures = mutableListOf()
+                            pictures = mutableListOf(it.toPicture())
                         } else {
                             pictures.add(it.toPicture())
                         }

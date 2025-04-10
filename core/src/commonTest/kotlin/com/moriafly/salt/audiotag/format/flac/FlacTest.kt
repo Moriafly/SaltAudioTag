@@ -10,10 +10,10 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.test.Test
 
+@OptIn(UnstableSaltAudioTagApi::class)
 class FlacTest {
     private val path = Path("C:\\Users\\moria\\Music\\G.E.M.邓紫棋 - 桃花诺.flac")
 
-    @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun test() {
 //        val audioFile = SaltAudioTag.create(
@@ -44,7 +44,6 @@ class FlacTest {
 //        }
     }
 
-    @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun testWrite() {
 //        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
@@ -55,7 +54,6 @@ class FlacTest {
         // audioFile.write(outputPath)
     }
 
-    @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun testWriteAddArtist() {
         val result = SystemFileSystem.source(path).buffered().use {
@@ -75,7 +73,7 @@ class FlacTest {
                 src = path,
                 dst = outputPath,
                 extension = "flac",
-                WriteOperation.AllMetadata(
+                WriteOperation.AllMetadata.create(
                     metadatas = audioTag.metadatas + Metadata(
                         key = "ARTIST",
                         value = "Salt Audio Tag"
@@ -85,7 +83,6 @@ class FlacTest {
         }
     }
 
-    @OptIn(UnstableSaltAudioTagApi::class)
     @Test
     fun testWriteRemoveAllMetadata() {
 //        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
@@ -100,5 +97,44 @@ class FlacTest {
 //                metadatas = emptyList()
 //            )
 //        )
+    }
+
+    @Test
+    fun readPictures() {
+        val result = SystemFileSystem.source(path).buffered().use {
+            SaltAudioTag.read(
+                source = it,
+                extension = "flac",
+                strategy = ReadStrategy.OnlyPicture
+            )
+        }
+
+        val audioTag = result.getOrThrow()
+
+        if (audioTag.pictures != null) {
+            if (audioTag.pictures.isEmpty()) {
+                println("Pictures is empty")
+            }
+
+            audioTag.pictures.forEach { picture ->
+                println(
+                    """
+                    pictureType = ${picture.pictureType}
+                    mediaType = ${picture.mediaType}
+                    description = ${picture.description}
+                    width = ${picture.width}
+                    height = ${picture.height}
+                    colorDepth = ${picture.colorDepth}
+                    colorsNumber = ${picture.colorsNumber}
+                    pictureData.size = ${picture.pictureData.size} Bytes
+                    """.trimIndent()
+                )
+            }
+        } else {
+            println("Pictures is null")
+        }
+    }
+
+    companion object {
     }
 }
