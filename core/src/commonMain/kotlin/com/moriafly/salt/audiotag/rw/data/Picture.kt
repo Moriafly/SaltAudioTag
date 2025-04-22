@@ -19,6 +19,18 @@
 
 package com.moriafly.salt.audiotag.rw.data
 
+/**
+ * Picture.
+ *
+ * @property pictureType Picture type.
+ * @property mediaType Media type.
+ * @property description Description.
+ * @property width Width.
+ * @property height Height.
+ * @property colorDepth Color depth.
+ * @property colorsNumber Colors number.
+ * @property pictureData Picture data.
+ */
 data class Picture(
     val pictureType: PictureType,
     val mediaType: String,
