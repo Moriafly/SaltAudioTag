@@ -55,7 +55,7 @@ data class Picture(
         PngFileIcon32x32,
 
         /**
-         * 	General file icon.
+         * General file icon.
          */
         GeneralFileIcon,
 
