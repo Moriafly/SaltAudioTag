@@ -6,7 +6,11 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.buildkonfig)
+    id("maven-publish")
 }
+
+group = "com.moriafly.salt.audiotag"
+version = libs.versions.version.get()
 
 kotlin {
     compilerOptions {
