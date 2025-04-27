@@ -26,6 +26,9 @@ data class Metadata(
 ) {
     fun toFlacUserComment(): String = "$key=$value"
 
+    /**
+     * Check if the metadata is valid.
+     */
     fun isValid(): Boolean = key.isNotBlank() && value.isNotBlank()
 
     /**
