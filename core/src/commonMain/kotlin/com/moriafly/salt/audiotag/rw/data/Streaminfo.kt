@@ -15,6 +15,8 @@
  * 02110-1301 USA
  */
 
+@file:Suppress("unused")
+
 package com.moriafly.salt.audiotag.rw.data
 
 /**
@@ -26,3 +28,15 @@ data class Streaminfo(
     val bits: Int,
     val sampleCount: Long
 )
+
+/**
+ * Get seconds of streaminfo.
+ */
+val Streaminfo.seconds: Float
+    get() = sampleCount.toFloat() / sampleRate
+
+/**
+ * Get duration of streaminfo, ms.
+ */
+val Streaminfo.duration: Long
+    get() = (seconds * 1000).toLong()
