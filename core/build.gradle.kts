@@ -48,8 +48,8 @@ kotlin {
             // implementation(libs.kotlin.test.junit)
         }
         commonMain.dependencies {
-            implementation(libs.kotlinx.io.core)
-            implementation(libs.kotlinx.io.bytestring)
+            api(libs.kotlinx.io.core)
+            api(libs.kotlinx.io.bytestring)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
