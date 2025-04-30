@@ -31,22 +31,21 @@ class FlacReader : Reader {
         var metadatas: List<Metadata>? = null
         var pictures: MutableList<Picture>? = null
 
+        var metadataBlockDataStreaminfo: MetadataBlockDataStreaminfo? = null
+
+        var fileLevelMetadataLength = 0L
+
         FlacSignature(source)
+        fileLevelMetadataLength += 4
 
         var metadataBlockHeader: MetadataBlockHeader
         do {
             metadataBlockHeader = MetadataBlockHeader.create(source)
+            fileLevelMetadataLength += 4
 
             when (metadataBlockHeader.blockType) {
                 BlockType.Streaminfo if strategy.streaminfo -> {
-                    MetadataBlockDataStreaminfo.create(source).also {
-                        streaminfo = Streaminfo(
-                            sampleRate = it.sampleRate,
-                            channelCount = it.channelCount,
-                            bits = it.bits,
-                            sampleCount = it.sampleCount
-                        )
-                    }
+                    metadataBlockDataStreaminfo = MetadataBlockDataStreaminfo.create(source)
                 }
 
                 BlockType.VorbisComment if strategy.metadatas -> {
@@ -78,7 +77,18 @@ class FlacReader : Reader {
 
                 else -> source.skip(metadataBlockHeader.length.toLong())
             }
+            fileLevelMetadataLength += metadataBlockHeader.length
         } while (!metadataBlockHeader.isLastMetadataBlock)
+
+        if (metadataBlockDataStreaminfo != null) {
+            streaminfo = Streaminfo(
+                sampleRate = metadataBlockDataStreaminfo.sampleRate,
+                channelCount = metadataBlockDataStreaminfo.channelCount,
+                bits = metadataBlockDataStreaminfo.bits,
+                sampleCount = metadataBlockDataStreaminfo.sampleCount,
+                fileLevelMetadataLength = fileLevelMetadataLength
+            )
+        }
 
         return AudioTag(
             streaminfo = streaminfo,

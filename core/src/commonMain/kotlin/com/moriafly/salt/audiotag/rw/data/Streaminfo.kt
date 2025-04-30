@@ -19,14 +19,19 @@
 
 package com.moriafly.salt.audiotag.rw.data
 
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+
 /**
  * @author Moriafly
+ *
+ * @property fileLevelMetadataLength file level metadata length, bytes.
  */
 data class Streaminfo(
     val sampleRate: Int,
     val channelCount: Int,
     val bits: Int,
-    val sampleCount: Long
+    val sampleCount: Long,
+    val fileLevelMetadataLength: Long
 )
 
 /**
@@ -40,3 +45,18 @@ val Streaminfo.seconds: Float
  */
 val Streaminfo.duration: Long
     get() = (seconds * 1000).toLong()
+
+/**
+ * Guess bitrate of streaminfo.
+ *
+ * @throws IllegalArgumentException if fileSize is negative or seconds is not positive.
+ */
+@UnstableSaltAudioTagApi
+fun Streaminfo.guessAverageBitrate(fileSize: Long): Float {
+    require(fileSize >= 0) { "fileSize must be non-negative" }
+    require(seconds > 0) { "seconds must be positive" }
+
+    val metadataLength = fileLevelMetadataLength.coerceAtMost(fileSize)
+    val effectiveSize = (fileSize - metadataLength).coerceAtLeast(0L)
+    return (effectiveSize * 8) / seconds
+}
