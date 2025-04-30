@@ -1,5 +1,6 @@
 [versions]
-version = "0.1.0-dev01"
+versionCode = "2"
+versionName = "0.1.0-dev08"
 agp = "8.9.1"
 android-compileSdk = "35"
 android-minSdk = "24"

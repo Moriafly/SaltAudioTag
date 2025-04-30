@@ -22,6 +22,7 @@ import com.moriafly.salt.audiotag.format.flac.FlacWriter
 import com.moriafly.salt.audiotag.rw.ReadStrategy
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.data.AudioTag
+import com.mroiafly.salt.audiotag.BuildKonfig
 import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -33,6 +34,8 @@ import kotlinx.io.files.SystemFileSystem
  * @author Moriafly
  */
 object SaltAudioTag {
+    fun getVersionName() = BuildKonfig.versionName
+
     /**
      * Read audio file.
      *

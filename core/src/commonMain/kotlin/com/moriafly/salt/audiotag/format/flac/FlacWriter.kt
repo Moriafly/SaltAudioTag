@@ -17,11 +17,11 @@
 
 package com.moriafly.salt.audiotag.format.flac
 
+import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
 import com.moriafly.salt.audiotag.rw.WriteOperation
 import com.moriafly.salt.audiotag.rw.Writer
 import com.moriafly.salt.audiotag.util.SystemFileSystemUtil
-import com.mroiafly.salt.audiotag.BuildKonfig
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -156,6 +156,6 @@ class FlacWriter : Writer {
     }
 
     companion object {
-        private val VENDOR_STRING = "Salt Audio Tag ${BuildKonfig.version}"
+        private val VENDOR_STRING = "Salt Audio Tag ${SaltAudioTag.getVersionName()}"
     }
 }

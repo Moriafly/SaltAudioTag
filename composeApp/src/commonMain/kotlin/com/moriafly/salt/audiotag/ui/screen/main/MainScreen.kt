@@ -18,6 +18,7 @@
 package com.moriafly.salt.audiotag.ui.screen.main
 
 import androidx.compose.runtime.Composable
+import com.moriafly.salt.audiotag.SaltAudioTag
 import com.moriafly.salt.audiotag.ui.navigation.LocalNavController
 import com.moriafly.salt.audiotag.ui.navigation.ScreenRoute
 import com.moriafly.salt.audiotag.ui.screen.basic.BasicScreenColumn
@@ -37,7 +38,7 @@ fun MainScreen() {
     ) {
         ItemOuterLargeTitle(
             text = "椒盐音频标签",
-            sub = "版本 0.1.0-dev01"
+            sub = "版本 ${SaltAudioTag.getVersionName()}"
         )
 
         RoundedColumn {

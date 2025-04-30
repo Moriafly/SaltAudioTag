@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.moriafly.salt.audiotag"
-version = libs.versions.version.get()
+version = libs.versions.versionName.get()
 
 kotlin {
     compilerOptions {
@@ -93,6 +93,6 @@ buildkonfig {
     // exposeObjectWithName = "YourAwesomePublicConfig"
 
     defaultConfigs {
-        buildConfigField(Type.STRING, "version", libs.versions.version.get())
+        buildConfigField(Type.STRING, "versionName", libs.versions.versionName.get())
     }
 }
