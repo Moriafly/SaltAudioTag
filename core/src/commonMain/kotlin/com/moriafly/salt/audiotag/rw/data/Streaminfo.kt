@@ -47,7 +47,9 @@ val Streaminfo.duration: Long
     get() = (seconds * 1000).toLong()
 
 /**
- * Guess bitrate of streaminfo.
+ * Guess bitrate of streaminfo. bps.
+ *
+ * 1 Kbps = 1000 bps
  *
  * @throws IllegalArgumentException if fileSize is negative or seconds is not positive.
  */
