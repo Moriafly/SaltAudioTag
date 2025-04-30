@@ -18,9 +18,11 @@
 package com.moriafly.salt.audiotag.ui.screen.audiotag
 
 import androidx.compose.foundation.text.input.TextFieldState
+import com.moriafly.salt.audiotag.rw.data.Streaminfo
 
 data class AudioTagUiState(
     val state: State = State.Idle,
+    val streaminfo: Streaminfo? = null,
     val metadataItemUiStates: List<MetadataItemUiState> = emptyList()
 ) {
     enum class State {

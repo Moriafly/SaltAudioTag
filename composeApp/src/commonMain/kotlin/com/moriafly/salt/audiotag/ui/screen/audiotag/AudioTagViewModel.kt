@@ -84,6 +84,7 @@ class AudioTagViewModel : ViewModel() {
 
                     _uiState.update {
                         it.copy(
+                            streaminfo = audioTag.streaminfo,
                             metadataItemUiStates = metadatas.map { metadata ->
                                 AudioTagUiState.MetadataItemUiState(
                                     key = TextFieldState(metadata.key),

@@ -130,6 +130,12 @@ private fun ColumnScope.AudioTagScreenContent(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
+                    uiState.streaminfo?.let {
+                        item {
+                            StreaminfoPanel(it)
+                        }
+                    }
+
                     item {
                         ItemOuterTitle(text = "元数据")
                         RoundedColumn {
