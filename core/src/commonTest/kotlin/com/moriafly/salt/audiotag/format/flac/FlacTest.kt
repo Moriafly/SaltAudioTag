@@ -12,36 +12,19 @@ import kotlin.test.Test
 
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacTest {
-    private val path = Path("C:\\Users\\moria\\Music\\G.E.M.邓紫棋 - 桃花诺.flac")
+    private val path = Path("C:\\Users\\moria\\Music\\Pig小优 - 画舫烟中浅.flac")
 
     @Test
-    fun test() {
-//        val audioFile = SaltAudioTag.create(
-//            path = path,
-//            rwStrategy = RwStrategy.ReadWriteAll
-//        )
-//        audioFile.getAllMetadata().forEach { metadataKeyValue ->
-//            println("${metadataKeyValue.key}=${metadataKeyValue.value}")
-//        }
-//
-//        val picture = audioFile.getLazyMetadataFirst(
-//            LazyMetadataKey.Picture(Picture.PictureType.BackCover)
-//        )
-//        if (picture != null) {
-//            val sinkPath = Path("C:\\Users\\moria\\Desktop\\frontCover.jpg")
-//            val sink = SystemFileSystem.sink(sinkPath).buffered()
-//            println(
-//                """
-//                mediaType = ${picture.mediaType}
-//                description = ${picture.description}
-//                wh = ${picture.width}x${picture.height}
-//                colorDepth = ${picture.colorDepth}bpp
-//                colorsNumber = ${picture.colorsNumber}
-//                pictureData.size = ${picture.pictureData.size}
-//                """.trimIndent()
-//            )
-//            sink.write(picture.pictureData)
-//        }
+    fun testRead() {
+        val audioTag = SaltAudioTag.read(
+            path = path,
+            extension = "flac",
+            strategy = ReadStrategy.All
+        ).getOrThrow()
+
+        audioTag.metadatas?.forEach { metadata ->
+            println("key = ${metadata.key} value = ${metadata.value}")
+        }
     }
 
     @Test
