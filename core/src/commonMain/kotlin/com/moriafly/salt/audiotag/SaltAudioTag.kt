@@ -63,6 +63,7 @@ object SaltAudioTag {
         when (extension) {
             "flac" -> FlacReader().read(source, strategy)
             else -> throw UnsupportedOperationException("Unsupported file format")
+            else -> throw UnsupportedOperationException("Unsupported file extension $extension")
         }
     }
 
@@ -102,6 +103,7 @@ object SaltAudioTag {
         when (extension) {
             "flac" -> FlacWriter().write(src, dst, *operation)
             else -> throw UnsupportedOperationException("Unsupported file format")
+            else -> throw UnsupportedOperationException("Unsupported file extension $extension")
         }
     }
 }
