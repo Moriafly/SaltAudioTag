@@ -62,7 +62,6 @@ object SaltAudioTag {
     ): Result<AudioTag> = runCatching {
         when (extension) {
             "flac" -> FlacReader().read(source, strategy)
-            else -> throw UnsupportedOperationException("Unsupported file format")
             else -> throw UnsupportedOperationException("Unsupported file extension $extension")
         }
     }
@@ -102,7 +101,6 @@ object SaltAudioTag {
     ): Result<Unit> = runCatching {
         when (extension) {
             "flac" -> FlacWriter().write(src, dst, *operation)
-            else -> throw UnsupportedOperationException("Unsupported file format")
             else -> throw UnsupportedOperationException("Unsupported file extension $extension")
         }
     }
