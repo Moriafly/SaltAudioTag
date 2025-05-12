@@ -1,16 +1,59 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.buildkonfig)
     id("maven-publish")
+    id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
-group = "com.moriafly.salt.audiotag"
-version = libs.versions.versionName.get()
+mavenPublishing {
+    // Define coordinates for the published artifact
+    coordinates(
+        groupId = "io.github.moriafly",
+        artifactId = "salt-audiotag",
+        version = libs.versions.versionName.get()
+    )
+
+    // Configure POM metadata for the published artifact
+    pom {
+        name.set("Salt Audio Tag")
+        description.set("Audio Tag")
+        inceptionYear.set("2025")
+        url.set("https://github.com/Moriafly/SaltAudioTag")
+
+        licenses {
+            license {
+                name.set("GNU Lesser General Public License v2.1")
+                url.set("https://github.com/Moriafly/SaltAudioTag/blob/main/LICENSE")
+            }
+        }
+
+        // Specify developer information
+        developers {
+            developer {
+                id.set("Moriafly")
+                name.set("Moriafly")
+                email.set("moriafly@163.com")
+            }
+        }
+
+        // Specify SCM information
+        scm {
+            url.set("https://github.com/Moriafly/SaltAudioTag")
+        }
+    }
+
+    // Configure publishing to Maven Central
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    // Enable GPG signing for all publications
+    signAllPublications()
+}
 
 kotlin {
     compilerOptions {
