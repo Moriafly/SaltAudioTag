@@ -19,6 +19,10 @@
 |------|-----|-------|----|
 | FLAC | 读   | 读/写   | 读  |
 
+## 核心库使用
+
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.moriafly/salt-audiotag)](https://search.maven.org/search?q=g:io.github.moriafly)
+
 ## 开源协议
 
 ```
