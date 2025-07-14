@@ -1,29 +1,41 @@
-# 椒盐音频标签 Salt Audio Tag
+# Salt Audio Tag
 
-## 这是什么？
+[](https://search.maven.org/search?q=g:io.github.moriafly)
+[](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html)
 
-开发目标：成为一个跨平台（Android、Windows、Linux 和 macOS）音频标签编辑器。
+## 📖 About
 
-开发状态：早期开发中。
+**Salt Audio Tag** aims to be a cross-platform audio tag editor for Android, iOS, Windows, Linux, and macOS.
 
-## 项目结构
+This project is currently in the **early stages of development**.
 
-基于 Compose Multiplatform 开发，IO 操作使用 kotlinx-io 库。
+## 🏗️ Project Structure
 
-- composeApp：App UI
-- core：标签
+The project is built using **Compose Multiplatform** for the user interface and **kotlinx-io** for handling I/O operations.
 
-## 格式支持
+- `composeApp`: Contains the application's UI code.
+- `core`: The core module for audio tagging logic.
 
-| 格式   | 流信息 | 文本元数据 | 图片 |
-|------|-----|-------|----|
-| FLAC | 读   | 读/写   | 读  |
+## 🎶 Format Support
 
-## 核心库使用
+| Format | Streaminfo |  Metadata  | Pictures |
+|:-------|:----------:|:----------:|:--------:|
+| FLAC   |    Read    | Read/Write |   Read   |
+| CDA    |    Read    |    Read    |          |
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.moriafly/salt-audiotag)](https://search.maven.org/search?q=g:io.github.moriafly)
+## 🚀 Usage (Core Library)
 
-## 开源协议
+To use the core library in your project, add the following dependency.
+
+**Gradle (Kotlin DSL)**
+
+```kotlin
+implementation("io.github.moriafly:salt-audiotag:LATEST_VERSION")
+```
+
+*Please replace `LATEST_VERSION` with the version number from the Maven Central badge above.*
+
+## 📜 License
 
 ```
 Salt Audio Tag
