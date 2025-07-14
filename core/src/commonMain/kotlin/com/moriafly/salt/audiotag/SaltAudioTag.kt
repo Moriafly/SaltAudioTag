@@ -17,6 +17,7 @@
 
 package com.moriafly.salt.audiotag
 
+import com.moriafly.salt.audiotag.format.cda.CdaReader
 import com.moriafly.salt.audiotag.format.flac.FlacReader
 import com.moriafly.salt.audiotag.format.flac.FlacWriter
 import com.moriafly.salt.audiotag.rw.ReadStrategy
@@ -62,6 +63,7 @@ object SaltAudioTag {
     ): Result<AudioTag> = runCatching {
         when (extension) {
             "flac" -> FlacReader().read(source, strategy)
+            "cda" -> CdaReader().read(source, strategy)
             else -> throw UnsupportedOperationException("Unsupported file extension $extension")
         }
     }

@@ -19,6 +19,8 @@
 
 package com.moriafly.salt.audiotag.rw.data
 
+import com.moriafly.salt.audiotag.UnstableSaltAudioTagApi
+
 @Suppress("SpellCheckingInspection")
 data class Metadata(
     val key: String,
@@ -62,5 +64,8 @@ data class Metadata(
         const val CONTACT = "CONTACT"
         const val ISRC = "ISRC"
         const val LYRICS = "LYRICS"
+
+        @UnstableSaltAudioTagApi
+        const val DISCID = "DISCID"
     }
 }
