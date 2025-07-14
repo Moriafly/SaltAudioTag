@@ -1,7 +1,6 @@
 # Salt Audio Tag
 
-[](https://search.maven.org/search?q=g:io.github.moriafly)
-[](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.moriafly/salt-audiotag)](https://search.maven.org/search?q=g:io.github.moriafly)
 
 ## 📖 About
 
