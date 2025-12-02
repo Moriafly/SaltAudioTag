@@ -29,7 +29,7 @@ import kotlin.test.Test
 
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacTest {
-    private val path = Path("C:\\Users\\moria\\Music\\Pig小优 - 画舫烟中浅.flac")
+    private val path = Path("C:\\Users\\moria\\Downloads\\像花一样 - 橘子汽水.flac")
 
     @Test
     fun testRead() {
@@ -39,8 +39,12 @@ class FlacTest {
             strategy = ReadStrategy.All
         ).getOrThrow()
 
+        audioTag.streaminfo?.let {
+            println(it)
+        }
+
         audioTag.metadatas?.forEach { metadata ->
-            println("key = ${metadata.key} value = ${metadata.value}")
+            println("key = ${metadata.key}, value = ${metadata.value}")
         }
     }
 
