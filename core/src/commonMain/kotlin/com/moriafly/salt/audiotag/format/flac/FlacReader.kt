@@ -17,11 +17,13 @@
 
 package com.moriafly.salt.audiotag.format.flac
 
+import com.moriafly.salt.audiotag.rw.PictureReadMode
 import com.moriafly.salt.audiotag.rw.ReadStrategy
 import com.moriafly.salt.audiotag.rw.Reader
 import com.moriafly.salt.audiotag.rw.data.AudioTag
 import com.moriafly.salt.audiotag.rw.data.Metadata
 import com.moriafly.salt.audiotag.rw.data.Picture
+import com.moriafly.salt.audiotag.rw.data.Picture.PictureType
 import com.moriafly.salt.audiotag.rw.data.Streaminfo
 import kotlinx.io.Source
 
@@ -32,16 +34,24 @@ class FlacReader : Reader {
         var pictures: MutableList<Picture>? = null
 
         var metadataBlockDataStreaminfo: MetadataBlockDataStreaminfo? = null
-
         var fileLevelMetadataLength = 0L
 
+        // Check FLAC signature
         FlacSignature(source)
         fileLevelMetadataLength += 4
 
         var metadataBlockHeader: MetadataBlockHeader
+
+        // Variables for SmartFrontCover mode
+        var bestPicture: Picture? = null
+        var currentMaxPriority = -1
+
         do {
             metadataBlockHeader = MetadataBlockHeader.create(source)
             fileLevelMetadataLength += 4
+
+            // The length of the block data excluding the header
+            val blockLength = metadataBlockHeader.length.toLong()
 
             when (metadataBlockHeader.blockType) {
                 BlockType.Streaminfo if strategy.streaminfo -> {
@@ -65,21 +75,70 @@ class FlacReader : Reader {
                     }
                 }
 
-                BlockType.Picture if strategy.pictures -> {
-                    MetadataBlockDataPicture.create(source).also {
-                        if (pictures == null) {
-                            pictures = mutableListOf(it.toPicture())
-                        } else {
-                            pictures.add(it.toPicture())
+                BlockType.Picture if strategy.pictureReadMode != PictureReadMode.None -> {
+                    // Read Picture Type (4 bytes) to determine priority
+                    // Note: blockLength includes these 4 bytes
+                    val pictureTypeInt = source.readInt()
+
+                    val pictureType = MetadataBlockDataPicture.mapPictureType(pictureTypeInt)
+
+                    // Calculate remaining length to read or skip
+                    val remainingLength = blockLength - 4
+
+                    when (val mode = strategy.pictureReadMode) {
+                        is PictureReadMode.All -> {
+                            // Delegate to the overloaded create method
+                            val pictureBlock = MetadataBlockDataPicture.create(
+                                source,
+                                pictureTypeInt
+                            )
+                            if (pictures == null) pictures = mutableListOf()
+                            pictures.add(pictureBlock.toPicture())
+                        }
+
+                        is PictureReadMode.Custom -> {
+                            if (mode.filter(pictureType)) {
+                                val pictureBlock = MetadataBlockDataPicture.create(
+                                    source,
+                                    pictureTypeInt
+                                )
+                                if (pictures == null) pictures = mutableListOf()
+                                pictures.add(pictureBlock.toPicture())
+                            } else {
+                                source.skip(remainingLength)
+                            }
+                        }
+
+                        is PictureReadMode.SmartFrontCover -> {
+                            val priority = getCoverPriority(pictureType)
+
+                            // Competition Logic:
+                            // If the new picture has higher priority than what we have, read it.
+                            // Otherwise, skip it to save memory.
+                            if (priority > currentMaxPriority) {
+                                val pictureBlock = MetadataBlockDataPicture.create(
+                                    source,
+                                    pictureTypeInt
+                                )
+                                bestPicture = pictureBlock.toPicture()
+                                currentMaxPriority = priority
+                            } else {
+                                source.skip(remainingLength)
+                            }
+                        }
+
+                        else -> {
+                            // Do nothing
                         }
                     }
                 }
 
-                else -> source.skip(metadataBlockHeader.length.toLong())
+                else -> source.skip(blockLength)
             }
             fileLevelMetadataLength += metadataBlockHeader.length
         } while (!metadataBlockHeader.isLastMetadataBlock)
 
+        // Assemble results
         if (metadataBlockDataStreaminfo != null) {
             streaminfo = Streaminfo(
                 sampleRate = metadataBlockDataStreaminfo.sampleRate,
@@ -90,10 +149,27 @@ class FlacReader : Reader {
             )
         }
 
+        // Assign the best picture found in Smart mode
+        if (strategy.pictureReadMode is PictureReadMode.SmartFrontCover && bestPicture != null) {
+            pictures = mutableListOf(bestPicture)
+        }
+
         return AudioTag(
             streaminfo = streaminfo,
             metadatas = metadatas,
             pictures = pictures
         )
+    }
+
+    /**
+     * Determines priority for SmartFrontCover mode.
+     * Higher value means higher priority.
+     */
+    private fun getCoverPriority(type: PictureType): Int = when (type) {
+        PictureType.FrontCover -> 100
+        PictureType.BackCover -> 80
+        PictureType.GeneralFileIcon -> 60
+        // All other types serve as a fallback with low priority
+        else -> 10
     }
 }

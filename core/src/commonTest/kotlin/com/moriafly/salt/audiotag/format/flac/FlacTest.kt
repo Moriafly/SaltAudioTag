@@ -29,7 +29,7 @@ import kotlin.test.Test
 
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacTest {
-    private val path = Path("C:\\Users\\moria\\Downloads\\像花一样 - 橘子汽水.flac")
+    private val path = Path("C:\\Users\\Moriafly\\Music\\编码测试\\FLAC\\Burn, Baby, Burn.flac")
 
     @Test
     fun testRead() {
@@ -45,6 +45,33 @@ class FlacTest {
 
         audioTag.metadatas?.forEach { metadata ->
             println("key = ${metadata.key}, value = ${metadata.value}")
+        }
+
+        audioTag.pictures?.forEach { picture ->
+            println(
+                """
+                ${picture.pictureType}
+                pictureData.size = ${picture.pictureData.size}
+                """.trimIndent()
+            )
+        }
+    }
+
+    @Test
+    fun `read smart front cover`() {
+        val audioTag = SaltAudioTag.read(
+            path = path,
+            extension = "flac",
+            strategy = ReadStrategy.SmartFrontCover
+        ).getOrThrow()
+
+        audioTag.pictures?.forEach { picture ->
+            println(
+                """
+                ${picture.pictureType}
+                pictureData.size = ${picture.pictureData.size}
+                """.trimIndent()
+            )
         }
     }
 

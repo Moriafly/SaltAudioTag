@@ -26,6 +26,7 @@ package com.moriafly.salt.audiotag.format.flac
 
 import com.moriafly.salt.audiotag.rw.CanWrite
 import com.moriafly.salt.audiotag.rw.data.Picture
+import com.moriafly.salt.audiotag.rw.data.Picture.PictureType
 import com.moriafly.salt.audiotag.util.writeInt24
 import kotlinx.io.Buffer
 import kotlinx.io.Source
@@ -426,30 +427,7 @@ internal data class MetadataBlockDataPicture(
         .readByteString()
 
     fun toPicture(): Picture = Picture(
-        pictureType = when (pictureType) {
-            0 -> Picture.PictureType.Other
-            1 -> Picture.PictureType.PngFileIcon32x32
-            2 -> Picture.PictureType.GeneralFileIcon
-            3 -> Picture.PictureType.FrontCover
-            4 -> Picture.PictureType.BackCover
-            5 -> Picture.PictureType.LinerNotesPage
-            6 -> Picture.PictureType.MediaLabel
-            7 -> Picture.PictureType.Lead
-            8 -> Picture.PictureType.Artist
-            9 -> Picture.PictureType.Conductor
-            10 -> Picture.PictureType.Band
-            11 -> Picture.PictureType.Composer
-            12 -> Picture.PictureType.Lyricist
-            13 -> Picture.PictureType.RecordingLocation
-            14 -> Picture.PictureType.DuringRecording
-            15 -> Picture.PictureType.DuringPerformance
-            16 -> Picture.PictureType.MovieScreenCapture
-            17 -> Picture.PictureType.BrightColoredFish
-            18 -> Picture.PictureType.Illustration
-            19 -> Picture.PictureType.BandLogo
-            20 -> Picture.PictureType.PublisherLogotype
-            else -> Picture.PictureType.Unknown
-        },
+        pictureType = mapPictureType(pictureType),
         mediaType = mediaType,
         description = description,
         width = width,
@@ -490,8 +468,44 @@ internal data class MetadataBlockDataPicture(
     }
 
     companion object {
+        /**
+         * Maps the integer ID from the FLAC block to the PictureType enum.
+         */
+        fun mapPictureType(id: Int): PictureType =
+            when (id) {
+                0 -> PictureType.Other
+                1 -> PictureType.PngFileIcon32x32
+                2 -> PictureType.GeneralFileIcon
+                3 -> PictureType.FrontCover
+                4 -> PictureType.BackCover
+                5 -> PictureType.LinerNotesPage
+                6 -> PictureType.MediaLabel
+                7 -> PictureType.Lead
+                8 -> PictureType.Artist
+                9 -> PictureType.Conductor
+                10 -> PictureType.Band
+                11 -> PictureType.Composer
+                12 -> PictureType.Lyricist
+                13 -> PictureType.RecordingLocation
+                14 -> PictureType.DuringRecording
+                15 -> PictureType.DuringPerformance
+                16 -> PictureType.MovieScreenCapture
+                17 -> PictureType.BrightColoredFish
+                18 -> PictureType.Illustration
+                19 -> PictureType.BandLogo
+                20 -> PictureType.PublisherLogotype
+                else -> PictureType.Unknown
+            }
+
         fun create(source: Source): MetadataBlockDataPicture {
             val pictureType = source.readInt()
+            return create(source, pictureType)
+        }
+
+        /**
+         * Accepts the type that was already read.
+         */
+        fun create(source: Source, pictureType: Int): MetadataBlockDataPicture {
             val mediaTypeLength = source.readInt()
             val mediaType = source.readString(mediaTypeLength.toLong())
             val descriptionLength = source.readInt()
