@@ -26,6 +26,7 @@ import com.moriafly.salt.audiotag.rw.data.Picture
 import com.moriafly.salt.audiotag.rw.data.Picture.PictureType
 import com.moriafly.salt.audiotag.rw.data.Streaminfo
 import kotlinx.io.Source
+import kotlinx.io.readByteArray
 
 class FlacReader : Reader {
     override fun read(source: Source, strategy: ReadStrategy): AudioTag {
@@ -34,23 +35,34 @@ class FlacReader : Reader {
         var pictures: MutableList<Picture>? = null
 
         var metadataBlockDataStreaminfo: MetadataBlockDataStreaminfo? = null
+
+        // Global offset tracker for lazy loading support
+        // Assumes source starts at 0. If reading from a slice, caller needs to adjust offset.
+        var currentGlobalOffset = 0L
         var fileLevelMetadataLength = 0L
 
         // Check FLAC signature
         FlacSignature(source)
+        currentGlobalOffset += 4
         fileLevelMetadataLength += 4
 
         var metadataBlockHeader: MetadataBlockHeader
 
-        // Variables for SmartFrontCover mode
+        // Smart Mode State
         var bestPicture: Picture? = null
         var currentMaxPriority = -1
 
         do {
             metadataBlockHeader = MetadataBlockHeader.create(source)
+
+            // Calculate offsets
+            // The block content starts after the 4-byte header
+            val blockStartOffset = currentGlobalOffset
+            val blockContentOffset = blockStartOffset + 4
+
+            currentGlobalOffset += 4
             fileLevelMetadataLength += 4
 
-            // The length of the block data excluding the header
             val blockLength = metadataBlockHeader.length.toLong()
 
             when (metadataBlockHeader.blockType) {
@@ -59,14 +71,13 @@ class FlacReader : Reader {
                 }
 
                 BlockType.VorbisComment if strategy.metadatas -> {
-                    MetadataBlockDataVorbisComment.create(source).also {
-                        metadatas = it.userComments.mapNotNull { userComment ->
+                    MetadataBlockDataVorbisComment.create(source).also { block ->
+                        metadatas = block.userComments.mapNotNull { userComment ->
                             val parts = userComment.split('=', limit = 2)
                             if (parts.size == 2) {
                                 val rawField = parts[0].trim()
                                 val value = parts[1].trim()
                                 val normalizedField = rawField.uppercase()
-
                                 Metadata(normalizedField, value)
                             } else {
                                 null
@@ -75,66 +86,77 @@ class FlacReader : Reader {
                     }
                 }
 
-                BlockType.Picture if strategy.pictureReadMode != PictureReadMode.None -> {
-                    // Read Picture Type (4 bytes) to determine priority
-                    // Note: blockLength includes these 4 bytes
+                BlockType.Picture if strategy.pictureReadMode !is PictureReadMode.None -> {
+                    // 1. Read Type (4 bytes)
                     val pictureTypeInt = source.readInt()
-
                     val pictureType = MetadataBlockDataPicture.mapPictureType(pictureTypeInt)
+                    val remainingBlockLength = blockLength - 4
 
-                    // Calculate remaining length to read or skip
-                    val remainingLength = blockLength - 4
-
-                    when (val mode = strategy.pictureReadMode) {
-                        is PictureReadMode.All -> {
-                            // Delegate to the overloaded create method
-                            val pictureBlock = MetadataBlockDataPicture.create(
-                                source,
-                                pictureTypeInt
-                            )
-                            if (pictures == null) pictures = mutableListOf()
-                            pictures.add(pictureBlock.toPicture())
-                        }
-
-                        is PictureReadMode.Custom -> {
-                            if (mode.filter(pictureType)) {
-                                val pictureBlock = MetadataBlockDataPicture.create(
-                                    source,
-                                    pictureTypeInt
-                                )
-                                if (pictures == null) pictures = mutableListOf()
-                                pictures.add(pictureBlock.toPicture())
-                            } else {
-                                source.skip(remainingLength)
-                            }
-                        }
-
+                    // 2. Check if we should process this block based on Filter Strategy
+                    val shouldProcess = when (val mode = strategy.pictureReadMode) {
+                        is PictureReadMode.All -> true
+                        is PictureReadMode.Custom -> mode.filter(pictureType)
                         is PictureReadMode.SmartFrontCover -> {
                             val priority = getCoverPriority(pictureType)
+                            priority > currentMaxPriority
+                        }
+                        else -> false
+                    }
 
-                            // Competition Logic:
-                            // If the new picture has higher priority than what we have, read it.
-                            // Otherwise, skip it to save memory.
-                            if (priority > currentMaxPriority) {
-                                val pictureBlock = MetadataBlockDataPicture.create(
-                                    source,
-                                    pictureTypeInt
-                                )
-                                bestPicture = pictureBlock.toPicture()
-                                currentMaxPriority = priority
-                            } else {
-                                source.skip(remainingLength)
-                            }
+                    if (shouldProcess) {
+                        // 3. Read Header (Metadata only, no binary data)
+                        // This moves the stream cursor to the start of picture data
+                        val header = MetadataBlockDataPicture.readHeader(source)
+
+                        // Calculate absolute offset of the image binary data
+                        // blockContentOffset + 4 (Type) + bytes consumed by header
+                        val absoluteDataOffset = blockContentOffset + 4 + header.bytesRead
+
+                        // 4. Determine Data Loading Strategy
+                        val pictureData: ByteArray
+
+                        if (strategy.loadPictureBinary) {
+                            // Eager Mode: Read the full binary data into memory
+                            pictureData = source.readByteArray(header.dataLength)
+                        } else {
+                            // Lazy Mode: Skip the data, keep array empty
+                            source.skip(header.dataLength.toLong())
+                            pictureData = byteArrayOf()
                         }
 
-                        else -> {
-                            // Do nothing
+                        val picture = Picture(
+                            pictureType = pictureType,
+                            mediaType = header.mediaType,
+                            description = header.description,
+                            width = header.width,
+                            height = header.height,
+                            colorDepth = header.colorDepth,
+                            colorsNumber = header.colorsNumber,
+                            pictureData = pictureData,
+                            globalFileOffset = absoluteDataOffset,
+                            dataLength = header.dataLength
+                        )
+
+                        // 5. Store the picture
+                        if (strategy.pictureReadMode is PictureReadMode.SmartFrontCover) {
+                            bestPicture = picture
+                            currentMaxPriority = getCoverPriority(pictureType)
+                        } else {
+                            if (pictures == null) pictures = mutableListOf()
+                            pictures.add(picture)
                         }
+                    } else {
+                        // Filter rejected this picture (or lower priority in Smart mode)
+                        // Skip the entire remaining block content efficiently
+                        source.skip(remainingBlockLength)
                     }
                 }
 
                 else -> source.skip(blockLength)
             }
+
+            // Advance global offset by the body length
+            currentGlobalOffset += blockLength
             fileLevelMetadataLength += metadataBlockHeader.length
         } while (!metadataBlockHeader.isLastMetadataBlock)
 
@@ -149,7 +171,7 @@ class FlacReader : Reader {
             )
         }
 
-        // Assign the best picture found in Smart mode
+        // Apply Smart mode result
         if (strategy.pictureReadMode is PictureReadMode.SmartFrontCover && bestPicture != null) {
             pictures = mutableListOf(bestPicture)
         }

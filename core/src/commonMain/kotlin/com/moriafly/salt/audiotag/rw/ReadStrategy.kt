@@ -28,7 +28,10 @@ import kotlin.jvm.JvmStatic
  *
  * @property streaminfo Whether to read the streaminfo block.
  * @property metadatas Whether to read the metadata block.
- * @property pictureReadMode The mode for reading picture blocks.
+ * @property pictureReadMode The mode for determining which picture blocks to process.
+ * @property loadPictureBinary Whether to load the actual picture binary data into memory.
+ * If false, [com.moriafly.salt.audiotag.rw.data.Picture.pictureData] will be empty, and
+ * [com.moriafly.salt.audiotag.rw.data.Picture.globalFileOffset] should be used (Lazy Loading).
  * @property pictures Helper property to check if any pictures are read (for backward compatibility).
  *
  * @author Moriafly
@@ -36,17 +39,20 @@ import kotlin.jvm.JvmStatic
 data class ReadStrategy(
     val streaminfo: Boolean,
     val metadatas: Boolean,
-    val pictureReadMode: PictureReadMode = PictureReadMode.All
+    val pictureReadMode: PictureReadMode,
+    val loadPictureBinary: Boolean
 ) {
     /**
      * Secondary constructor to maintain binary compatibility with older versions.
      * This ensures that code compiling against the old (Boolean, Boolean, Boolean) signature still works.
+     * Old code implies eager loading (loadPictureBinary = true).
      */
     @Deprecated("Use the new constructor with PictureReadMode")
     constructor(streaminfo: Boolean, metadatas: Boolean, pictures: Boolean) : this(
         streaminfo,
         metadatas,
-        if (pictures) PictureReadMode.All else PictureReadMode.None
+        if (pictures) PictureReadMode.All else PictureReadMode.None,
+        true
     )
 
     /**
@@ -62,21 +68,33 @@ data class ReadStrategy(
         val IgnorePicture = ReadStrategy(
             streaminfo = true,
             metadatas = true,
-            pictureReadMode = PictureReadMode.None
+            pictureReadMode = PictureReadMode.None,
+            loadPictureBinary = false
         )
 
         @JvmStatic
         val OnlyPicture = ReadStrategy(
             streaminfo = false,
             metadatas = false,
-            pictureReadMode = PictureReadMode.All
+            pictureReadMode = PictureReadMode.All,
+            loadPictureBinary = true
+        )
+
+        @UnstableSaltAudioTagApi
+        @JvmStatic
+        val OnlyPictureLazy = ReadStrategy(
+            streaminfo = false,
+            metadatas = false,
+            pictureReadMode = PictureReadMode.All,
+            loadPictureBinary = false
         )
 
         @JvmStatic
         val All = ReadStrategy(
             streaminfo = true,
             metadatas = true,
-            pictureReadMode = PictureReadMode.All
+            pictureReadMode = PictureReadMode.All,
+            loadPictureBinary = true
         )
 
         /**
@@ -85,13 +103,30 @@ data class ReadStrategy(
          * 2. If not found, falls back to BackCover.
          * 3. If not found, falls back to other types.
          * Only keeps the best match in memory.
+         *
+         * Note: This loads the binary data into memory.
          */
         @UnstableSaltAudioTagApi
         @JvmStatic
         val SmartFrontCover = ReadStrategy(
             streaminfo = false,
             metadatas = false,
-            pictureReadMode = PictureReadMode.SmartFrontCover
+            pictureReadMode = PictureReadMode.SmartFrontCover,
+            loadPictureBinary = true
+        )
+
+        /**
+         * Intelligent mode with Lazy Loading:
+         * Same priority logic as [SmartFrontCover], but does NOT load the binary data into memory.
+         * Use [com.moriafly.salt.audiotag.rw.data.Picture.globalFileOffset] to read data later.
+         */
+        @UnstableSaltAudioTagApi
+        @JvmStatic
+        val SmartFrontCoverLazy = ReadStrategy(
+            streaminfo = false,
+            metadatas = false,
+            pictureReadMode = PictureReadMode.SmartFrontCover,
+            loadPictureBinary = false
         )
     }
 }

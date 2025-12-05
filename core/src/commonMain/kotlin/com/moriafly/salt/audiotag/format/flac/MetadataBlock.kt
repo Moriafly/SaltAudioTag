@@ -435,6 +435,8 @@ internal data class MetadataBlockDataPicture(
         colorDepth = colorDepth,
         colorsNumber = colorsNumber,
         pictureData = pictureData
+        // Note: globalFileOffset and dataLength are defaulted to -1 and 0 in Picture
+        // when created from this legacy/eager method.
     )
 
     override fun equals(other: Any?): Boolean {
@@ -466,6 +468,22 @@ internal data class MetadataBlockDataPicture(
         result = 31 * result + pictureData.contentHashCode()
         return result
     }
+
+    /**
+     * Data holder for picture metadata without the binary body.
+     *
+     * @property bytesRead Total bytes consumed to read this header.
+     */
+    data class HeaderInfo(
+        val mediaType: String,
+        val description: String,
+        val width: Int,
+        val height: Int,
+        val colorDepth: Int,
+        val colorsNumber: Int,
+        val dataLength: Int,
+        val bytesRead: Long
+    )
 
     companion object {
         /**
@@ -503,29 +521,61 @@ internal data class MetadataBlockDataPicture(
         }
 
         /**
-         * Accepts the type that was already read.
+         * Creates a [MetadataBlockDataPicture] assuming the type has already been read.
+         * This performs an EAGER read (loads data into memory).
          */
         fun create(source: Source, pictureType: Int): MetadataBlockDataPicture {
+            // Re-use the encapsulated logic to read metadata
+            val header = readHeader(source)
+
+            // Read the actual data (Eager loading)
+            val pictureData = source.readByteArray(header.dataLength)
+
+            return MetadataBlockDataPicture(
+                pictureType = pictureType,
+                mediaType = header.mediaType,
+                description = header.description,
+                width = header.width,
+                height = header.height,
+                colorDepth = header.colorDepth,
+                colorsNumber = header.colorsNumber,
+                pictureData = pictureData
+            )
+        }
+
+        /**
+         * Reads only the metadata header parts.
+         * Moves the source cursor up to the beginning of the picture data.
+         *
+         * @return [HeaderInfo] containing metadata and the length of the data to follow.
+         */
+        fun readHeader(source: Source): HeaderInfo {
+            var bytesRead = 0L
+
             val mediaTypeLength = source.readInt()
             val mediaType = source.readString(mediaTypeLength.toLong())
+            bytesRead += 4 + mediaTypeLength
+
             val descriptionLength = source.readInt()
             val description = source.readString(descriptionLength.toLong())
+            bytesRead += 4 + descriptionLength
+
             val width = source.readInt()
             val height = source.readInt()
             val colorDepth = source.readInt()
             val colorsNumber = source.readInt()
             val pictureDataLength = source.readInt()
-            val pictureData = source.readByteArray(pictureDataLength)
+            bytesRead += 20 // 5 * 4 bytes
 
-            return MetadataBlockDataPicture(
-                pictureType = pictureType,
+            return HeaderInfo(
                 mediaType = mediaType,
                 description = description,
                 width = width,
                 height = height,
                 colorDepth = colorDepth,
                 colorsNumber = colorsNumber,
-                pictureData = pictureData
+                dataLength = pictureDataLength,
+                bytesRead = bytesRead
             )
         }
     }

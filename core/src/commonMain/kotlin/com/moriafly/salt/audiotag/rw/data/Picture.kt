@@ -20,16 +20,28 @@
 package com.moriafly.salt.audiotag.rw.data
 
 /**
- * Picture.
+ * Represents a picture embedded in the audio file.
  *
- * @property pictureType Picture type.
- * @property mediaType Media type.
- * @property description Description.
- * @property width Width.
- * @property height Height.
- * @property colorDepth Color depth.
- * @property colorsNumber Colors number.
- * @property pictureData Picture data.
+ * This class corresponds to the METADATA_BLOCK_PICTURE in FLAC.
+ * It supports both eager loading (data in memory) and lazy loading (data on disk).
+ *
+ * @property pictureType The type of the picture (e.g., Front Cover, Artist, etc.).
+ * @property mediaType The MIME type string, e.g., "image/jpeg" or "image/png".
+ * @property description The description of the picture, in UTF-8.
+ * @property width The width of the picture in pixels.
+ * @property height The height of the picture in pixels.
+ * @property colorDepth The color depth of the picture in bits-per-pixel.
+ * @property colorsNumber The number of colors used. For indexed-color pictures (e.g., GIF), this is
+ * the number of colors in the palette. For non-indexed pictures, this is usually 0.
+ * @property pictureData The binary data of the picture. If lazy loading is enabled
+ * (via `loadPictureBinary = false`), this array will be empty to save memory.
+ * @property globalFileOffset The absolute offset (in bytes) of the picture binary data within the
+ * source file/stream. This is useful for random access (e.g., using `RandomAccessFile` or Android
+ * `FileDescriptor`) to decode the image without loading it fully into memory. Returns -1 if not
+ * available.
+ * @property dataLength The length (in bytes) of the picture binary data. If [pictureData] is
+ * loaded, this equals `pictureData.size`. In lazy loading mode, this indicates the size of the data
+ * on disk.
  */
 data class Picture(
     val pictureType: PictureType,
@@ -39,8 +51,13 @@ data class Picture(
     val height: Int,
     val colorDepth: Int,
     val colorsNumber: Int,
-    val pictureData: ByteArray
+    val pictureData: ByteArray,
+    val globalFileOffset: Long = -1L,
+    val dataLength: Int = 0
 ) {
+    /**
+     * The picture type according to the ID3v2 APIC frame specifications.
+     */
     enum class PictureType {
         /**
          * Other.
@@ -149,6 +166,9 @@ data class Picture(
          */
         PublisherLogotype,
 
+        /**
+         * Unknown or reserved type.
+         */
         Unknown
     }
 
@@ -166,6 +186,8 @@ data class Picture(
         if (colorDepth != other.colorDepth) return false
         if (colorsNumber != other.colorsNumber) return false
         if (!pictureData.contentEquals(other.pictureData)) return false
+        if (globalFileOffset != other.globalFileOffset) return false
+        if (dataLength != other.dataLength) return false
 
         return true
     }
@@ -179,6 +201,8 @@ data class Picture(
         result = 31 * result + colorDepth
         result = 31 * result + colorsNumber
         result = 31 * result + pictureData.contentHashCode()
+        result = 31 * result + globalFileOffset.hashCode()
+        result = 31 * result + dataLength
         return result
     }
 }

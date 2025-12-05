@@ -76,6 +76,46 @@ class FlacTest {
     }
 
     @Test
+    fun `read smart front cover lazy`() {
+        val audioTag = SaltAudioTag.read(
+            path = path,
+            extension = "flac",
+            strategy = ReadStrategy.SmartFrontCoverLazy
+        ).getOrThrow()
+
+        audioTag.pictures?.forEach { picture ->
+            println(
+                """
+                ${picture.pictureType}
+                pictureData.size = ${picture.pictureData.size}
+                pictureData.globalFileOffset = ${picture.globalFileOffset}
+                pictureData.dataLength = ${picture.dataLength}
+                """.trimIndent()
+            )
+        }
+    }
+
+    @Test
+    fun `read only picture lazy`() {
+        val audioTag = SaltAudioTag.read(
+            path = path,
+            extension = "flac",
+            strategy = ReadStrategy.OnlyPictureLazy
+        ).getOrThrow()
+
+        audioTag.pictures?.forEach { picture ->
+            println(
+                """
+                ${picture.pictureType}
+                pictureData.size = ${picture.pictureData.size}
+                pictureData.globalFileOffset = ${picture.globalFileOffset}
+                pictureData.dataLength = ${picture.dataLength}
+                """.trimIndent()
+            )
+        }
+    }
+
+    @Test
     fun testWrite() {
 //        val outputPath = Path("C:\\Users\\moria\\Desktop\\G.E.M.邓紫棋 - 桃花诺_output.flac")
 //        val audioFile = SaltAudioTag.create(
