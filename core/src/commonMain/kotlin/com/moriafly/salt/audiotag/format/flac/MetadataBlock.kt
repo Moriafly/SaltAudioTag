@@ -47,8 +47,12 @@ internal class MetadataBlock(
 )
 
 internal sealed class BlockType(
-    val value: Int
+    open val value: Int
 ) {
+    data class Unsupported(
+        override val value: Int
+    ) : BlockType(value)
+
     data object Streaminfo : BlockType(BLOCK_TYPE_STREAMINFO)
 
     data object Padding : BlockType(BLOCK_TYPE_PADDING)
@@ -74,6 +78,8 @@ internal sealed class BlockType(
         private const val BLOCK_TYPE_CUESHEET = 5
         private const val BLOCK_TYPE_PICTURE = 6
 
+        // TODO BLOCK_TYPE 72?
+
         /**
          * Forbidden (to avoid confusion with a frame sync code).
          */
@@ -88,7 +94,7 @@ internal sealed class BlockType(
             BLOCK_TYPE_CUESHEET -> Cuesheet
             BLOCK_TYPE_PICTURE -> Picture
             BLOCK_TYPE_INVALID -> Invalid
-            else -> error("Unsupported block type: $value.")
+            else -> Unsupported(value)
         }
     }
 }

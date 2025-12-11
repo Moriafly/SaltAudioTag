@@ -29,7 +29,7 @@ import kotlin.test.Test
 
 @OptIn(UnstableSaltAudioTagApi::class)
 class FlacTest {
-    private val path = Path("C:\\Users\\Moriafly\\Music\\编码测试\\FLAC\\Burn, Baby, Burn.flac")
+    private val path = Path("C:\\Users\\Moriafly\\Music\\编码测试\\FLAC\\关喆 - 想你的夜 (1).flac")
 
     @Test
     fun testRead() {
